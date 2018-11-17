@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { transformarCanonica, converterObjetivo } from "./Utils/conversores";
+import { transformarCanonica, converterObjetivo } from "../Utils/conversores";
 
 export default class Simplex extends Component {
 
