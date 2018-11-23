@@ -16,7 +16,10 @@ export default class Simplex extends Component {
           //x1 >= 0 e x2 >= 0
         ]
       },
-
+      simplex: [[1, 0, 1, 0, 0, 4],
+      [0, 2, 0, 1, 0, 12],
+      [2, 3, 0, 0, 1, 21],
+      [-3, -5, 0, 0, 0, 0]],
       b: []
     };
   }
@@ -60,36 +63,57 @@ export default class Simplex extends Component {
     this.converterMatrix(m, b);
 
 
-    const simplex = [];
+    var simplex = [];
+    const cabecalhoTopo = ['x1', 'x2', 'f1', 'f2', 'f3', 'b'];
+    const cabecalhoEsquerda = ['f1', 'f2', 'f3', 'z'];
     simplex[0] = [1, 0, 1, 0, 0, 4]
     simplex[1] = [0, 2, 0, 1, 0, 12]
     simplex[2] = [2, 3, 0, 0, 1, 21]
     simplex[3] = [-3, -5, 0, 0, 0, 0]
 
-    let colunaPivo = this.getColunaPivo(simplex[3])
-    console.log('coluna pivo', colunaPivo)
+    let iteracoes = 0;
+    for (let index = 0; index < simplex[simplex.length - 1].length; index++) {
+      if (simplex[simplex.length - 1][index] !== 0) iteracoes++
+    }
 
-    let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
-    console.log('linha pivo', linhaPivo)
+    console.log("Iterações: ", iteracoes)
+    for (let index = 0; index < iteracoes; index++) {
 
-    // let variavelParaSair = this.getVariavelParaSair(simplex, colunaPivo.coluna, linhaPivo.linha)
+      let colunaPivo = this.getColunaPivo(simplex[3])
+      console.log('coluna pivo', colunaPivo)
 
-    console.log('Queem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
+      let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
+      console.log('linha pivo', linhaPivo)
 
-    let novaLinha = this.removerVariavel(simplex, colunaPivo.coluna, linhaPivo.linha)
+      // let variavelParaSair = this.getVariavelParaSair(simplex, colunaPivo.coluna, linhaPivo.linha)
 
-    // console.log("Novo Simplex\n", novaLinha);
-    console.log(simplex)
-    simplex[linhaPivo.linha] = novaLinha;
+      console.log('Queem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
 
-    const novaColuna = simplex.map((linha, i) =>
-      (i === linhaPivo.linha) ?
-        simplex[linhaPivo.linha][colunaPivo.coluna]
-        :
-        linha[colunaPivo.coluna] * -1 * simplex[linhaPivo.linha][colunaPivo.coluna] + linha[colunaPivo.coluna]
-    )
+      let novaLinha = this.removerVariavel(simplex, colunaPivo.coluna, linhaPivo.linha)
 
-    console.log(novaColuna)
+      // console.log("Novo Simplex\n", novaLinha);
+      console.log(simplex)
+
+      simplex[linhaPivo.linha] = novaLinha;
+
+      simplex = simplex.map((linha, i) =>
+        (linhaPivo.linha === i) ?
+          linha
+          :
+          linha.map((item, j) =>
+            item - simplex[i][colunaPivo.coluna] * simplex[linhaPivo.linha][j]
+          )
+      )
+
+      // let cabecalhoAux = cabecalhoEsquerda[linhaPivo.linha];
+      cabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
+
+      this.setState({ simplex })
+
+      console.log(simplex)
+      console.log(cabecalhoEsquerda)
+    }
+
   }
 
   getColunaPivo = simplex => {
@@ -179,6 +203,8 @@ export default class Simplex extends Component {
   }
 
   render = () => {
+    console.log(this.state.simplex)
+
     return (
       <div className="container">
 
