@@ -12,7 +12,7 @@ export default class Simplex extends Component {
         restricoes: [
           'x1 <= 4',
           '2x2 <= 12',
-          '2x1 + 3x2 <= 21',
+          '2x1 + 3x2 <= 9',
           //x1 >= 0 e x2 >= 0
         ]
       },
@@ -62,7 +62,7 @@ export default class Simplex extends Component {
 
     const simplex = [];
     simplex[0] = [1, 0, 1, 0, 0, 4]
-    simplex[1] = [0, 2, 0, 1, 0, 12,]
+    simplex[1] = [0, 2, 0, 1, 0, 12]
     simplex[2] = [2, 3, 0, 0, 1, 21]
     simplex[3] = [-3, -5, 0, 0, 0, 0]
 
@@ -72,22 +72,24 @@ export default class Simplex extends Component {
     let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
     console.log('linha pivo', linhaPivo)
 
-    let variavelParaSair = this.getVariavelParaSair(simplex, colunaPivo.coluna)
+    // let variavelParaSair = this.getVariavelParaSair(simplex, colunaPivo.coluna, linhaPivo.linha)
 
-    console.log('Queem sai', variavelParaSair)
+    console.log('Queem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
 
+    let novaLinha = this.removerVariavel(simplex, colunaPivo.coluna, linhaPivo.linha)
 
-    /*  
-    console.log(variavelParaSair)
-    console.log(colunaPivo)
+    // console.log("Novo Simplex\n", novaLinha);
+    console.log(simplex)
+    simplex[linhaPivo.linha] = novaLinha;
 
-    console.log(simplex[0][colunaPivo.coluna])
-    console.log(simplex[1][colunaPivo.coluna])
-    console.log(simplex[2][colunaPivo.coluna])
-    console.log(simplex[3][colunaPivo.coluna])
-    */
+    const novaColuna = simplex.map((linha, i) =>
+      (i === linhaPivo.linha) ?
+        simplex[linhaPivo.linha][colunaPivo.coluna]
+        :
+        linha[colunaPivo.coluna] * -1 * simplex[linhaPivo.linha][colunaPivo.coluna] + linha[colunaPivo.coluna]
+    )
 
-
+    console.log(novaColuna)
   }
 
   getColunaPivo = simplex => {
@@ -156,17 +158,24 @@ export default class Simplex extends Component {
 
     //retorna objeto contendo a linha e o valor dele no simplex
     return linhaPivo;
-
   }
 
-  getVariavelParaSair = (simplex, coluna) => {
+
+  getVariavelParaSair = (simplex, coluna, linha) => {
     let variavelParaSair = null;
-    simplex[1].map((variavel, i) => {
+    simplex[linha].map((variavel, i) => {
       if (i === coluna)
         variavelParaSair = variavel;
       return null;
     })
     return variavelParaSair;
+  }
+
+
+  removerVariavel = (simplex, coluna, linha) => {
+    let variavelParaSair = this.getVariavelParaSair(simplex, coluna, linha);
+
+    return simplex[linha].map(variavel => variavel / variavelParaSair)
   }
 
   render = () => {
