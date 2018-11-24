@@ -8,13 +8,18 @@ export default class Simplex extends Component {
     this.state = {
       entrada: {
         tipo: 'max',
-        objetivo: '3x1 + 5x2 = 0',
+        objetivo: '520x1 + 450x2 = 0',
         restricoes: [
-          'x1 <= 4',
-          '2x2 <= 12',
-          '2x1 + 3x2 <= 9',
-          //x1 >= 0 e x2 >= 0
+          '40x1 + 25x2 <= 400',
+          '24x1 + 30x2 <= 360',
         ]
+        // objetivo: '3x1 + 5x2 = 0',
+        // restricoes: [
+        //   'x1 <= 4',
+        //   '2x2 <= 12',
+        //   '2x1 + 3x2 <= 9',
+        //   //x1 >= 0 e x2 >= 0
+        // ]
       },
       simplex: [[1, 0, 1, 0, 0, 4],
       [0, 2, 0, 1, 0, 12],
@@ -62,58 +67,65 @@ export default class Simplex extends Component {
 
     this.converterMatrix(m, b);
 
-
     var simplex = [];
-    const cabecalhoTopo = ['x1', 'x2', 'f1', 'f2', 'f3', 'b'];
-    const cabecalhoEsquerda = ['f1', 'f2', 'f3', 'z'];
-    simplex[0] = [1, 0, 1, 0, 0, 4]
-    simplex[1] = [0, 2, 0, 1, 0, 12]
-    simplex[2] = [2, 3, 0, 0, 1, 21]
-    simplex[3] = [-3, -5, 0, 0, 0, 0]
+    // const cabecalhoTopo = ['x1', 'x2', 'f1', 'f2', 'f3', 'b'];
+    // const variaveis = cabecalhoTopo.filter(item => item.includes('x'))
+    // const cabecalhoEsquerda = ['f1', 'f2', 'f3', 'z'];
+    // simplex[0] = [1, 0, 1, 0, 0, 4]
+    // simplex[1] = [0, 2, 0, 1, 0, 12]
+    // simplex[2] = [2, 3, 0, 0, 1, 21]
+    // simplex[3] = [-3, -5, 0, 0, 0, 0]
 
-    let iteracoes = 0;
-    for (let index = 0; index < simplex[simplex.length - 1].length; index++) {
-      if (simplex[simplex.length - 1][index] !== 0) iteracoes++
+    const cabecalhoTopo = ['x1', 'x2', 'f1', 'f2', 'b'];
+    const variaveis = cabecalhoTopo.filter(item => item.includes('x'))
+    const cabecalhoEsquerda = ['f1', 'f2', 'z'];
+    simplex[0] = [40, 25, 1, 0, 400]
+    simplex[1] = [24, 30, 0, 1, 360]
+    simplex[2] = [-520, -450, 0, 0, 0]
+
+    const recursiva = (simplex, index) => {
+      if (index === simplex[0].length) return simplex
+      if (simplex[simplex.length - 1][index] !== 0) {
+        let colunaPivo = this.getColunaPivo(simplex[simplex.length - 1])
+        console.log('coluna pivo', colunaPivo)
+
+        let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
+        console.log('linha pivo', linhaPivo)
+
+        console.log('Quem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
+
+        let novaLinha = this.removerVariavel(simplex, colunaPivo.coluna, linhaPivo.linha)
+
+        simplex[linhaPivo.linha] = novaLinha;
+
+        const novoSimplex = simplex.map((linha, i) =>
+          (linhaPivo.linha === i) ?
+            linha
+            :
+            linha.map((item, j) =>
+              item - simplex[i][colunaPivo.coluna] * simplex[linhaPivo.linha][j]
+            )
+        )
+
+        cabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
+
+        console.log(cabecalhoEsquerda)
+
+        return recursiva(novoSimplex, ++index)
+      }
+      return recursiva(simplex, ++index)
     }
 
-    console.log("Iterações: ", iteracoes)
-    for (let index = 0; index < iteracoes; index++) {
+    const resultado = recursiva(simplex, 0);
+    console.log("Resultado", resultado)
 
-      let colunaPivo = this.getColunaPivo(simplex[3])
-      console.log('coluna pivo', colunaPivo)
+    const solucao = variaveis.map(variavel => {
+      const linha = cabecalhoEsquerda.indexOf(variavel)
+      return resultado[linha][resultado[linha].length - 1]
+    })
+    solucao[solucao.length] = resultado[resultado.length - 1][resultado[0].length - 1]
 
-      let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
-      console.log('linha pivo', linhaPivo)
-
-      // let variavelParaSair = this.getVariavelParaSair(simplex, colunaPivo.coluna, linhaPivo.linha)
-
-      console.log('Queem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
-
-      let novaLinha = this.removerVariavel(simplex, colunaPivo.coluna, linhaPivo.linha)
-
-      // console.log("Novo Simplex\n", novaLinha);
-      console.log(simplex)
-
-      simplex[linhaPivo.linha] = novaLinha;
-
-      simplex = simplex.map((linha, i) =>
-        (linhaPivo.linha === i) ?
-          linha
-          :
-          linha.map((item, j) =>
-            item - simplex[i][colunaPivo.coluna] * simplex[linhaPivo.linha][j]
-          )
-      )
-
-      // let cabecalhoAux = cabecalhoEsquerda[linhaPivo.linha];
-      cabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
-
-      this.setState({ simplex })
-
-      console.log(simplex)
-      console.log(cabecalhoEsquerda)
-    }
-
+    console.log(solucao)
   }
 
   getColunaPivo = simplex => {
