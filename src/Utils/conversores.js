@@ -9,16 +9,105 @@
 */
 
 export const transformarCanonica = (restricoes) => {
-  let matriz = []
+  let matriz = [];
+  let listaFolga = [];
+  let listaArtificial = [];
+  let listaX = [];
 
   restricoes.map((restricao, i) => {
-    let expressao = validarExpressao(restricao, i)
-    if (!expressao) return false;
+    let vetor = mapearExpressao(restricao.replace(/\s+/g, ''));
+    listaX.push(vetor);
 
+    if (restricao.search('<=') !== -1) {
+      listaFolga.push('f' + (listaFolga.length + 1));
+    }
+
+    else if (restricao.search('>=') !== -1) {
+      listaFolga.push('f' + (listaFolga.length + 1));
+      listaArtificial.push('a' + (listaArtificial.length + 1));
+    }
+
+    else if (restricao.search('=') !== -1) {
+      listaArtificial.push('a' + (listaArtificial.length + 1));
+    }
+
+  });
+
+
+  restricoes.map((restricao, i) => {
+    let expressao = validarExpressao(restricao, i, listaFolga, listaArtificial)
     return matriz.push(expressao);
   });
 
-  return matriz;
+  //console.log(listaX)
+  gerarListaDeX(listaX)
+
+  let matrizCanonica = {
+    matriz,
+    listaFolga,
+    listaArtificial,
+  }
+  return matrizCanonica;
+}
+
+const validarExpressao = (expressao, i, listaF, listaA) => {
+  let exp = '';
+  let indiceArtificialAux = 0;
+  let indiceFolgalAux = 0;
+
+  let listaX = mapearExpressao(expressao.replace(/\s+/g, ''));
+
+  if (listaA.length < i) {
+    indiceArtificialAux = i - listaA.length
+  } else if (listaA.length > i) {
+    indiceArtificialAux = i
+  }
+
+  //Valida lista de F para nao chegar um indice que nao existe
+  if (listaF.length < i) {
+    indiceFolgalAux = i - listaF.length
+  } else if (listaF.length > i) {
+    indiceFolgalAux = i
+  }
+
+  if (listaF[indiceFolgalAux] === undefined) {
+    listaF[indiceFolgalAux] = listaF[0]
+  }
+
+  if (expressao.search('<=') !== -1) {
+    if (expressao.search(listaX[0]) !== -1)
+      exp = expressao.replace(listaX[0], listaX[0] + ' + ' + listaF[indiceFolgalAux]);
+    return exp.replace('<=', '=');
+  }
+
+  if (expressao.search('>=') !== -1) {
+    if (expressao.search(listaX[0]) !== -1)
+      exp = expressao.replace(listaX[0], listaX[0] + ' - ' + listaF[indiceFolgalAux] + ' + ' + listaA[indiceArtificialAux]);
+    return exp.replace('>=', '=');
+  }
+
+  if (expressao.search('=') !== -1) {
+    if (expressao.search(listaX[0]) !== -1)
+      return expressao.replace(listaX[0], listaX[0] + ' + ' + listaA[indiceArtificialAux]);
+  }
+
+  return false;
+}
+
+const gerarListaDeX = (listaX) => {
+  let novaListaX = []
+  console.log(listaX)
+
+  listaX.map((itemX) => {
+    itemX.map((item) => { novaListaX.push(item) });
+  })
+
+  //GERA LISTA X sem repetir para montar o cabeçalho posteriormente
+  novaListaX = novaListaX.filter(function (elemento, i) {
+    return novaListaX.indexOf(elemento) == i;
+  })
+  console.log(novaListaX)
+
 }
 
 const mapearExpressao = (expressao) => {
@@ -26,48 +115,23 @@ const mapearExpressao = (expressao) => {
   let elemento = '';
 
   for (let index = 0; index < expressao.length; index++) {
-    let valorAtual = expressao[index]
+    let valorAtual = expressao[index];
 
+    //Acerta a expressao para ficar na forma correta
     if (valorAtual === 'x') {
-      elemento = 'x'
+      elemento = 'x';
     } else if (!isNaN(valorAtual)) {
-      elemento = elemento + valorAtual
+      elemento = elemento + valorAtual;
     }
 
     if ((valorAtual === '<' || valorAtual === '>' || valorAtual === '=' ||
       valorAtual === '+' || valorAtual === '-') && elemento) {
-      vetorX.push(elemento)
-      elemento = ''
+      vetorX.push(elemento);
+      elemento = '';
     }
   }
 
   return vetorX;
-}
-
-export const validarExpressao = (expressao, i) => {
-  let exp = '';
-  let listaX = mapearExpressao(expressao.replace(/\s+/g, ''));
-
-  if (expressao.search('<=') !== -1) {
-    if (expressao.search(listaX[0]) !== -1)
-      exp = expressao.replace(listaX[0], listaX[0] + ' + f' + (i + 1));
-
-    return exp.replace('<=', '=')
-  }
-
-  if (expressao.search('>=') !== -1) {
-    if (expressao.search(listaX[0]) !== -1)
-      exp = expressao.replace(listaX[0], listaX[0] + ' + a' + (i + 1) + ' - f' + (i + 1));
-
-    return exp.replace('>=', '=')
-  }
-
-  if (expressao.search('=') !== -1) {
-    if (expressao.search(listaX[0]) !== -1)
-      return expressao.replace(listaX[0], listaX[0] + ' + a' + (i + 1));
-  }
-
-  return false;
 }
 
 export const converterObjetivo = (objetivoZ) => {
@@ -79,8 +143,8 @@ export const converterObjetivo = (objetivoZ) => {
       let listaX = mapearExpressao(objetivo);
 
       if (obj.search(listaX[0]) !== -1) {
-        let o = obj.split(listaX[0])
-        return o[0]
+        let o = obj.split(listaX[0]);
+        return o[0];
       }
     }
     return '';
@@ -100,7 +164,7 @@ export const converterObjetivo = (objetivoZ) => {
           return objCanonico.push(aux);
         } else {
           aux = '-' + item;
-          return objCanonico.push(aux)
+          return objCanonico.push(aux);
         }
       }
     }

@@ -10,6 +10,17 @@ export default class Simplex extends Component {
         tipo: 'max',
         objetivo: '520x1 + 450x2 = 0',
         restricoes: [
+          /* Precisa colocar tudo na ordem dos sinais todos F, todos A
+               Caso contrario ele reseta para F1 novamente se pular
+          
+          '40x1 + 25x2 <= 400',
+          '24x1 + 30x2 <= 360',
+          '40x1 + 25x2 <= 400',
+          '24x1 + 30x2 >= 360',
+           40x1 + 25x2 >= 400',
+          '24x1 + 30x2 >= 360',
+          '24x1 + 30x2 = 360',
+          */
           '40x1 + 25x2 <= 400',
           '24x1 + 30x2 <= 360',
         ]
@@ -56,16 +67,17 @@ export default class Simplex extends Component {
   }
 
   componentDidMount = () => {
-
-    let m = transformarCanonica(this.state.entrada.restricoes);
-
+    const { matriz, listaArtificial, listaFolga } = transformarCanonica(this.state.entrada.restricoes);
     converterObjetivo(this.state.entrada.objetivo);
 
-    m.push(this.state.entrada.objetivo);
+    console.log(listaArtificial);
+    console.log(listaFolga);
 
-    let b = this.gerarB(m);
+    matriz.push(this.state.entrada.objetivo);
 
-    this.converterMatrix(m, b);
+    let b = this.gerarB(matriz);
+
+    this.converterMatrix(matriz, b);
 
     var simplex = [];
     // const cabecalhoTopo = ['x1', 'x2', 'f1', 'f2', 'f3', 'b'];
@@ -87,12 +99,12 @@ export default class Simplex extends Component {
       if (index === simplex[0].length) return simplex
       if (simplex[simplex.length - 1][index] !== 0) {
         let colunaPivo = this.getColunaPivo(simplex[simplex.length - 1])
-        console.log('coluna pivo', colunaPivo)
+        //console.log('coluna pivo', colunaPivo)
 
         let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
-        console.log('linha pivo', linhaPivo)
+        //console.log('linha pivo', linhaPivo)
 
-        console.log('Quem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
+        //console.log('Quem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
 
         let novaLinha = this.removerVariavel(simplex, colunaPivo.coluna, linhaPivo.linha)
 
@@ -109,7 +121,7 @@ export default class Simplex extends Component {
 
         cabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
 
-        console.log(cabecalhoEsquerda)
+        //console.log(cabecalhoEsquerda)
 
         return recursiva(novoSimplex, ++index)
       }
@@ -117,7 +129,7 @@ export default class Simplex extends Component {
     }
 
     const resultado = recursiva(simplex, 0);
-    console.log("Resultado", resultado)
+    //console.log("Resultado", resultado)
 
     const solucao = variaveis.map(variavel => {
       const linha = cabecalhoEsquerda.indexOf(variavel)
@@ -125,7 +137,7 @@ export default class Simplex extends Component {
     })
     solucao[solucao.length] = resultado[resultado.length - 1][resultado[0].length - 1]
 
-    console.log(solucao)
+    //console.log(solucao)
   }
 
   getColunaPivo = simplex => {
@@ -215,7 +227,7 @@ export default class Simplex extends Component {
   }
 
   render = () => {
-    console.log(this.state.simplex)
+    //console.log(this.state.simplex)
 
     return (
       <div className="container">
