@@ -1,110 +1,106 @@
 import React, { Component } from 'react';
 import Simplex from "./components/Simplex";
-import Interacoes from './components/Interacoes';
+import jsonExemplo from "./public/jsons/simplex1.json";
+import { Container, Segment, Grid, Button, Icon, Input, Divider } from "semantic-ui-react";
 
 class App extends Component {
 
-  state = {
-    simplex: [],
-    simplex2: [],
-    simplex3: [],
-    simplex4: []
+  constructor(props) {
+    super(props);
+    this.state = {
+      arquivo: {},
+      json: {
+        tipo: "",
+        objetivo: "",
+        retricoes: []
+      },
+      errors: {}
+    };
+    this.onChangeFile = this.onChangeFile.bind(this);
+    this.lerArquivo = this.lerArquivo.bind(this);
   }
 
-  componentWillMount = () => {
-    const simplex = [];
-    simplex[0] = [1, 6, -1, 0, 1, 0, 0, 7]
-    simplex[1] = [4, 3, 0, -1, 0, 1, 0, 12]
-    simplex[2] = [1, 2, 0, 0, 0, 0, 1, 18]
-    simplex[3] = [-15, -32, 0, 0, 999999, 999999, 999999, 0]
+  lerArquivo = (e) => {
+    return function (e) {
+      try {
+        const json = JSON.parse(e.target.result);
 
-    const simplex2 = simplex.map((array, row) =>
-      array.map((item, i) =>
-        (simplex.length - 1 === row) ?
-          item - 999999 * simplex[0][i]
-          :
-          item
-      )
-    )
+        if (json.tipo && json.objetivo && json.restricoes)
+          this.setState({
+            json: {
+              tipo: json.tipo,
+              objetivo: json.objetivo,
+              restricoes: json.restricoes
+            }
+          })
+        else
+          this.setState({ errors: { arquivo: "Arquivo json mal formatado. Você precisa deixar o arquivo no formato do exemplo" } })
 
-    const simplex3 = simplex2.map((array, row) =>
-      array.map((item, i) =>
-        (simplex.length - 1 === row) ?
-          item - 999999 * simplex[1][i]
-          :
-          item
-      )
-    )
+      } catch (ex) {
+        console.log('Erro ao tentar analisar o arquivo JSON = ' + ex);
+        this.setState({ errors: { arquivo: "Arquivo json mal formatado. Você precisa deixar o arquivo no formato do exemplo" } })
+      }
+    }.bind(this);
+  }
 
-    const simplex4 = simplex3.map((array, row) =>
-      array.map((item, i) =>
-        (simplex.length - 1 === row) ?
-          item - 999999 * simplex[2][i]
-          :
-          item
-      )
-    )
-    this.setState({ simplex, simplex2, simplex3, simplex4 })
+  onChangeFile = (e) => {
+    const mimeArquivo = ["application/json"];
+    var arquivos = e.target.files; // objeto FileList
+
+    this.setState({ errors: {} })
+    if (!arquivos || !arquivos[0]) {
+      return this.setState({ errors: { arquivo: "Você precisa selecionar um arquivo" } })
+    } else if (!mimeArquivo.includes(arquivos[0].type)) {
+      return this.setState({ errors: { arquivo: "O formato do arquivo precisa ser do tipo json" } })
+    }
+
+    // arquivos é um FileList de objetos File.
+    var reader = new FileReader();
+    reader.onload = this.lerArquivo(arquivos[0]);
+    reader.readAsText(arquivos[0])
   }
 
   render() {
-    const { simplex, simplex2, simplex3, simplex4 } = this.state;
+    const { json, errors } = this.state;
+
     return (
-      <div className="container">
-        <h2>Simplex React</h2>
+      <Container fluid>
+        <h2>SimplexJS</h2>
         <Simplex />
-        <h4>Ajustes</h4>
-        <table className="table text-center table-bordered">
-          <tbody>
-            {simplex.map(array => {
-              return (
-                <tr key={Math.random()}>
-                  {array.map(item => <td key={Math.random()}>{item} </td>)}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        <hr />
-        <table className="table text-center table-bordered">
-          <tbody>
-            {simplex2.map(array => {
-              return (
-                <tr key={Math.random()}>
-                  {array.map(item => <td key={Math.random()}>{item} </td>)}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        <hr />
-        <table className="table text-center table-bordered">
-          <tbody>
-            {simplex3.map(array => {
-              return (
-                <tr key={Math.random()}>
-                  {array.map(item => <td key={Math.random()}>{item} </td>)}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        <hr />
-        <table className="table text-center table-bordered">
-          <tbody>
-            {simplex4.map(array => {
-              return (
-                <tr key={Math.random()}>
-                  {array.map(item => <td key={Math.random()}>{item} </td>)}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        <br />
-        <h4>Interações</h4>
-        <Interacoes simplexAjustado={simplex4} />
-      </div>
+        <Grid doubling columns={2} divided>
+          <Grid.Row stretched>
+            <Grid.Column>
+              <Segment padded>
+                <p>Você pode selecionar um arquivo JSON no mesmo formato do exemplo:</p>
+                <Button as={"label"} htmlFor="arquivo" color="blue">
+                  <Icon name="file alternate outline" /> Arquivo JSON
+                </Button>
+                <Input
+                  type="file"
+                  name="arquivo"
+                  id="arquivo"
+                  style={{ display: "none" }}
+                  onChange={this.onChangeFile}
+                  accept="aplication/json"
+                />
+                {(errors.arquivo) ? <p className="erro">{errors.arquivo}</p> : (false)}
+                < Divider section />
+                <pre className="json">
+                  {(json.restricoes) ? JSON.stringify(json, null, 2) : "O conteúdo do seu arquivo JSON aparecerá aqui"}
+                </pre>
+              </Segment>
+            </Grid.Column>
+            <Grid.Column>
+              <Segment padded>
+                <h4>Exemplo de arquivo JSON:</h4>
+                <pre className="json">
+                  {JSON.stringify(jsonExemplo, null, 2)}
+                </pre>
+              </Segment>
+            </Grid.Column>
+          </Grid.Row>
+        </Grid>
+      </Container>
     );
   }
 }

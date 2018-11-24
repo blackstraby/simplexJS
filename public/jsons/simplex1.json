@@ -1,0 +1,9 @@
+{
+  "tipo": "max",
+  "objetivo": "520x1 + 450x2 = 0",
+  "restricoes": [
+    "40x1 + 25x2 <= 400",
+    "24x1 + 30x2 <= 360"
+  ],
+  "itemExtra": "Esse item não afeta a execução do algoritmo"
+}
