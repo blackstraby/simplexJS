@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { transformarCanonica, converterObjetivo } from "../Utils/conversores";
+import { Table, Divider, Segment } from "semantic-ui-react";
 
 export default class Simplex extends Component {
 
@@ -12,7 +13,7 @@ export default class Simplex extends Component {
         restricoes: [
           /* Precisa colocar tudo na ordem dos sinais todos F, todos A
                Caso contrario ele reseta para F1 novamente se pular
-          
+
           '40x1 + 25x2 <= 400',
           '24x1 + 30x2 <= 360',
           '40x1 + 25x2 <= 400',
@@ -32,12 +33,23 @@ export default class Simplex extends Component {
         //   //x1 >= 0 e x2 >= 0
         // ]
       },
-      simplex: [[1, 0, 1, 0, 0, 4],
-      [0, 2, 0, 1, 0, 12],
-      [2, 3, 0, 0, 1, 21],
-      [-3, -5, 0, 0, 0, 0]],
+      simplex: [
+        [1, 0, 1, 0, 0, 4],
+        [0, 2, 0, 1, 0, 12],
+        [2, 3, 0, 0, 1, 21],
+        [-3, -5, 0, 0, 0, 0]
+      ],
+      cabecalhoTopo: [],
+      cabecalhoEsquerda: [],
+      variaveis: [],
+      iteracoes: [],
+      solucao: [],
       b: []
     };
+  }
+
+  componentWillReceiveProps = (nextProps) => {
+    console.log("Entrada: ", nextProps.entrada)
   }
 
   converterMatrix = (m, b) => {
@@ -95,9 +107,17 @@ export default class Simplex extends Component {
     simplex[1] = [24, 30, 0, 1, 360]
     simplex[2] = [-520, -450, 0, 0, 0]
 
+    this.setState({ cabecalhoEsquerda, cabecalhoTopo, variaveis })
+
+    const iteracoes = this.state.iteracoes;
+    iteracoes.push(simplex);
+    this.setState({ iteracoes, variaveis })
+
     const recursiva = (simplex, index) => {
-      if (index === simplex[0].length) return simplex
+      if (index === simplex[0].length || iteracoes.length - 1 === variaveis.length) return simplex
+
       if (simplex[simplex.length - 1][index] !== 0) {
+
         let colunaPivo = this.getColunaPivo(simplex[simplex.length - 1])
         //console.log('coluna pivo', colunaPivo)
 
@@ -121,23 +141,25 @@ export default class Simplex extends Component {
 
         cabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
 
+        this.setState({ cabecalhoEsquerda })
         //console.log(cabecalhoEsquerda)
-
+        const iteracoes = this.state.iteracoes;
+        iteracoes.push(novoSimplex);
+        this.setState({ iteracoes })
         return recursiva(novoSimplex, ++index)
       }
       return recursiva(simplex, ++index)
     }
 
     const resultado = recursiva(simplex, 0);
-    //console.log("Resultado", resultado)
-
     const solucao = variaveis.map(variavel => {
       const linha = cabecalhoEsquerda.indexOf(variavel)
       return resultado[linha][resultado[linha].length - 1]
     })
     solucao[solucao.length] = resultado[resultado.length - 1][resultado[0].length - 1]
 
-    //console.log(solucao)
+    this.setState({ solucao })
+    console.log(solucao)
   }
 
   getColunaPivo = simplex => {
@@ -208,7 +230,6 @@ export default class Simplex extends Component {
     return linhaPivo;
   }
 
-
   getVariavelParaSair = (simplex, coluna, linha) => {
     let variavelParaSair = null;
     simplex[linha].map((variavel, i) => {
@@ -227,11 +248,46 @@ export default class Simplex extends Component {
   }
 
   render = () => {
-    //console.log(this.state.simplex)
-
+    const { iteracoes, cabecalhoTopo, cabecalhoEsquerda, variaveis, solucao } = this.state;
+    console.log(this.state.iteracoes)
     return (
-      <div className="container">
-
+      <div>
+        {iteracoes.map((tabela, i) => {
+          return (
+            <div key={i}>
+              <h3>{i + 1}ª iteração</h3>
+              <Divider hidden />
+              <Table celled className="tabela-simplex">
+                <Table.Header>
+                  <Table.Row>
+                    <Table.HeaderCell>BASE</Table.HeaderCell>
+                    {cabecalhoTopo.map((valor, i) => <Table.HeaderCell key={i}>{valor}</Table.HeaderCell>)}
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {
+                    tabela.map((linha, i) => {
+                      return (
+                        <Table.Row key={i}>
+                          <Table.Cell>{cabecalhoEsquerda[i]}</Table.Cell>
+                          {linha.map((valor, i) => <Table.Cell key={i}>{(valor.toString().indexOf('.') !== -1) ? valor.toFixed('3').replace('.', ',') : valor}</Table.Cell>)}
+                        </Table.Row>
+                      )
+                    })
+                  }
+                </Table.Body>
+              </Table>
+              <Divider hidden />
+            </div>
+          )
+        })}
+        <Segment padded>
+          <h3>Solução:</h3>
+          {variaveis.map((variavel, i) => {
+            return <h4 key={i}>{`${variavel} = ${solucao[i]}`}</h4>
+          })}
+          <h4>Z = {solucao[solucao.length - 1]}</h4>
+        </Segment>
       </div>
     );
   }

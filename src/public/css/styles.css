@@ -15,3 +15,7 @@ body {
   color: crimson;
   font-size: 12px;
 }
+
+.tabela-simplex {
+  text-align: center !important;
+}

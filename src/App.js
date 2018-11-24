@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Simplex from "./components/Simplex";
 import jsonExemplo from "./public/jsons/simplex1.json";
-import { Container, Segment, Grid, Button, Icon, Input, Divider } from "semantic-ui-react";
+import { Container, Segment, Grid, Button, Icon, Input, Divider, Label } from "semantic-ui-react";
 
 class App extends Component {
 
@@ -66,12 +66,11 @@ class App extends Component {
     return (
       <Container fluid>
         <h2>SimplexJS</h2>
-        <Simplex />
         <Grid doubling columns={2} divided>
           <Grid.Row stretched>
             <Grid.Column>
               <Segment padded>
-                <p>Você pode selecionar um arquivo JSON no mesmo formato do exemplo:</p>
+                <h4>Você pode selecionar um arquivo JSON no mesmo formato do exemplo:</h4>
                 <Button as={"label"} htmlFor="arquivo" color="blue">
                   <Icon name="file alternate outline" /> Arquivo JSON
                 </Button>
@@ -84,7 +83,7 @@ class App extends Component {
                   accept="aplication/json"
                 />
                 {(errors.arquivo) ? <p className="erro">{errors.arquivo}</p> : (false)}
-                < Divider section />
+                <Divider hidden />
                 <pre className="json">
                   {(json.restricoes) ? JSON.stringify(json, null, 2) : "O conteúdo do seu arquivo JSON aparecerá aqui"}
                 </pre>
@@ -100,7 +99,18 @@ class App extends Component {
             </Grid.Column>
           </Grid.Row>
         </Grid>
-      </Container>
+        <Grid doubling columns={1} divided>
+          <Grid.Row stretched>
+            <Grid.Column>
+              <Segment padded>
+                Método utilizado: &nbsp;<Label color={"purple"}>Simplex simples</Label>
+                <Divider hidden />
+                <Simplex entrada={json} />
+              </Segment>
+            </Grid.Column>
+          </Grid.Row>
+        </Grid>
+      </Container >
     );
   }
 }
