@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { transformarCanonica, converterObjetivo } from "../Utils/conversores";
-import { Table, Divider, Segment } from "semantic-ui-react";
+import { Table, Divider, Segment, Label } from "semantic-ui-react";
 
 export default class Simplex extends Component {
 
@@ -38,6 +38,19 @@ export default class Simplex extends Component {
           'x2 + x3 + 2x4 <= 600',
           '3x1 + 2x2 + 4x3 <= 500',
         ]
+        // MULTIPLAS SOLUÇÕES ÓTIMAS
+        // objetivo: '3x1 + 2x2 = 0',
+        // restricoes: [
+        //   'x1 <= 4',
+        //   '2x2 <= 12',
+        //   '3x1 + 2x2 <= 18',
+        // ]
+        // ÓTIMO NÃO FINITO
+        // objetivo: '6x1 + 10x2 = 0',
+        // restricoes: [
+        //   '-x1 + x2 <= 1',
+        //   '-3x1 + 3x2 <= 6',
+        // ]
       },
       simplex: [
         [1, 0, 1, 0, 0, 4],
@@ -50,6 +63,8 @@ export default class Simplex extends Component {
       variaveis: [],
       iteracoes: [],
       solucao: [],
+      solucoesAlternativas: [],
+      casoParticular: "",
       b: []
     };
   }
@@ -121,6 +136,23 @@ export default class Simplex extends Component {
     simplex[2] = [3, 2, 4, 0, 0, 0, 1, 500]
     simplex[3] = [-100, -80, -120, -30, 0, 0, 0, 0]
 
+    // MULTIPLAS SOLUÇÕES ÓTIMAS
+    // const cabecalhoTopo = ['x1', 'x2', 'f1', 'f2', 'f3', 'b'];
+    // const variaveis = cabecalhoTopo.filter(item => item.includes('x'))
+    // const cabecalhoEsquerda = ['f1', 'f2', 'f3', 'z'];
+    // simplex[0] = [1, 0, 1, 0, 0, 4]
+    // simplex[1] = [0, 2, 0, 1, 0, 12]
+    // simplex[2] = [3, 2, 0, 0, 1, 18]
+    // simplex[3] = [-3, -2, 0, 0, 0, 0]
+
+    // ÓTIMO NÃO FINITO
+    // const cabecalhoTopo = ['x1', 'x2', 'f1', 'f2', 'b'];
+    // const variaveis = cabecalhoTopo.filter(item => item.includes('x'))
+    // const cabecalhoEsquerda = ['f1', 'f2', 'z'];
+    // simplex[0] = [-1, 1, 1, 0, 1]
+    // simplex[1] = [-3, 3, 0, 1, 6]
+    // simplex[2] = [-6, -10, 0, 0, 0]
+
     this.setState({ cabecalhoEsquerda, cabecalhoTopo, variaveis })
 
     const iteracoes = this.state.iteracoes;
@@ -129,21 +161,28 @@ export default class Simplex extends Component {
 
     const temParcelasNegativas = simplex => simplex[simplex.length - 1].some(item => item < 0)
 
+
     const recursiva = (simplex, index) => {
       if (index === simplex[0].length || iteracoes.length - 1 === variaveis.length || !temParcelasNegativas(simplex)) return simplex
 
       if (simplex[simplex.length - 1][index] !== 0) {
 
         let colunaPivo = this.getColunaPivo(simplex[simplex.length - 1])
-        //console.log('coluna pivo', colunaPivo)
+        // console.log('coluna pivo', colunaPivo)
 
         let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
         //console.log('linha pivo', linhaPivo)
 
+        //ÓTIMO NÃO FINITO
+        //Retorna se todos os itens da coluna pivô não são positivos (são todos <= 0)
+        if (simplex.every(linha => linha[colunaPivo.coluna] <= 0)) {
+          this.setState({ casoParticular: "Ótimo não finito" })
+          return simplex
+        }
+
         //console.log('Quem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
 
-        let novaLinha = this.removerVariavel(simplex, colunaPivo.coluna, linhaPivo.linha)
-
+        let novaLinha = this.removerVariavel(simplex, colunaPivo.coluna, linhaPivo.linha);
         simplex[linhaPivo.linha] = novaLinha;
 
         const novoSimplex = simplex.map((linha, i) =>
@@ -177,6 +216,13 @@ export default class Simplex extends Component {
     })
     solucao[solucao.length] = resultado[resultado.length - 1][resultado[0].length - 1]
 
+    //SOLUÇÕES ALTERNATIVAS
+    // variaveis.map(variavel => {
+    //   const coluna = cabecalhoTopo.indexOf(variavel)
+    //   if (coluna !== -1) {
+
+    //   }
+    // })
     this.setState({ solucao })
     console.log(solucao)
   }
@@ -267,8 +313,7 @@ export default class Simplex extends Component {
   }
 
   render = () => {
-    const { iteracoes, cabecalhoTopo, cabecalhoEsquerda, variaveis, solucao } = this.state;
-    console.log(this.state.iteracoes)
+    const { iteracoes, cabecalhoTopo, cabecalhoEsquerda, variaveis, solucao, casoParticular } = this.state;
     return (
       <div>
         {iteracoes.map((tabela, i) => {
@@ -301,11 +346,18 @@ export default class Simplex extends Component {
           )
         })}
         <Segment padded>
-          <h3>Solução:</h3>
-          {variaveis.map((variavel, i) => {
-            return <h4 key={i}>{`${variavel} = ${solucao[i]}`}</h4>
-          })}
-          <h4>Z = {solucao[solucao.length - 1]}</h4>
+          {(casoParticular) ?
+            <h3>Caso particular: &nbsp;<Label color='purple'>{casoParticular}</Label></h3>
+            :
+            <div>
+              <h3>Solução:</h3>
+              {variaveis.map((variavel, i) => {
+                return <h4 key={i}>{`${variavel} = ${solucao[i]}`}</h4>
+              })}
+              <h4>Z = {solucao[solucao.length - 1]}</h4>
+            </div>
+          }
+
         </Segment>
       </div>
     );
