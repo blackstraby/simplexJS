@@ -95,6 +95,8 @@ class App extends Component {
                 <pre className="json">
                   {JSON.stringify(jsonExemplo, null, 2)}
                 </pre>
+                <Divider hidden />
+                <Label attached='bottom'><Icon name="info circle" /> Todas as variáveis devem ser representadas por x1, x2, x3...</Label>
               </Segment>
             </Grid.Column>
           </Grid.Row>

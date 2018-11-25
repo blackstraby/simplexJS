@@ -8,6 +8,7 @@ body {
   font-family: 'Source Code Pro',
     monospace;
   font-size: 13px;
+  white-space: pre-wrap;
 }
 
 .erro {

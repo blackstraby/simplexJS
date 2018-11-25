@@ -9,22 +9,22 @@ export default class Simplex extends Component {
     this.state = {
       entrada: {
         tipo: 'max',
-        objetivo: '520x1 + 450x2 = 0',
-        restricoes: [
-          /* Precisa colocar tudo na ordem dos sinais todos F, todos A
-               Caso contrario ele reseta para F1 novamente se pular
+        // objetivo: '520x1 + 450x2 = 0',
+        // restricoes: [
+        //   /* Precisa colocar tudo na ordem dos sinais todos F, todos A
+        //        Caso contrario ele reseta para F1 novamente se pular
 
-          '40x1 + 25x2 <= 400',
-          '24x1 + 30x2 <= 360',
-          '40x1 + 25x2 <= 400',
-          '24x1 + 30x2 >= 360',
-           40x1 + 25x2 >= 400',
-          '24x1 + 30x2 >= 360',
-          '24x1 + 30x2 = 360',
-          */
-          '40x1 + 25x2 <= 400',
-          '24x1 + 30x2 <= 360',
-        ]
+        //   '40x1 + 25x2 <= 400',
+        //   '24x1 + 30x2 <= 360',
+        //   '40x1 + 25x2 <= 400',
+        //   '24x1 + 30x2 >= 360',
+        //    40x1 + 25x2 >= 400',
+        //   '24x1 + 30x2 >= 360',
+        //   '24x1 + 30x2 = 360',
+        //   */
+        //   '40x1 + 25x2 <= 400',
+        //   '24x1 + 30x2 <= 360',
+        // ]
         // objetivo: '3x1 + 5x2 = 0',
         // restricoes: [
         //   'x1 <= 4',
@@ -32,6 +32,12 @@ export default class Simplex extends Component {
         //   '2x1 + 3x2 <= 9',
         //   //x1 >= 0 e x2 >= 0
         // ]
+        objetivo: '100x1 + 80x2 + 120x3 + 30x4 = 0',
+        restricoes: [
+          'x1 + x2 + x3 + 4x4 <= 300',
+          'x2 + x3 + 2x4 <= 600',
+          '3x1 + 2x2 + 4x3 <= 500',
+        ]
       },
       simplex: [
         [1, 0, 1, 0, 0, 4],
@@ -100,12 +106,20 @@ export default class Simplex extends Component {
     // simplex[2] = [2, 3, 0, 0, 1, 21]
     // simplex[3] = [-3, -5, 0, 0, 0, 0]
 
-    const cabecalhoTopo = ['x1', 'x2', 'f1', 'f2', 'b'];
+    // const cabecalhoTopo = ['x1', 'x2', 'f1', 'f2', 'b'];
+    // const variaveis = cabecalhoTopo.filter(item => item.includes('x'))
+    // const cabecalhoEsquerda = ['f1', 'f2', 'z'];
+    // simplex[0] = [40, 25, 1, 0, 400]
+    // simplex[1] = [24, 30, 0, 1, 360]
+    // simplex[2] = [-520, -450, 0, 0, 0]
+
+    const cabecalhoTopo = ['x1', 'x2', 'x3', 'x4', 'f1', 'f2', 'f3', 'b'];
     const variaveis = cabecalhoTopo.filter(item => item.includes('x'))
-    const cabecalhoEsquerda = ['f1', 'f2', 'z'];
-    simplex[0] = [40, 25, 1, 0, 400]
-    simplex[1] = [24, 30, 0, 1, 360]
-    simplex[2] = [-520, -450, 0, 0, 0]
+    const cabecalhoEsquerda = ['f1', 'f2', 'f3', 'z'];
+    simplex[0] = [1, 1, 1, 4, 1, 0, 0, 300]
+    simplex[1] = [0, 1, 1, 2, 0, 1, 0, 600]
+    simplex[2] = [3, 2, 4, 0, 0, 0, 1, 500]
+    simplex[3] = [-100, -80, -120, -30, 0, 0, 0, 0]
 
     this.setState({ cabecalhoEsquerda, cabecalhoTopo, variaveis })
 
@@ -113,8 +127,10 @@ export default class Simplex extends Component {
     iteracoes.push(simplex);
     this.setState({ iteracoes, variaveis })
 
+    const temParcelasNegativas = simplex => simplex[simplex.length - 1].some(item => item < 0)
+
     const recursiva = (simplex, index) => {
-      if (index === simplex[0].length || iteracoes.length - 1 === variaveis.length) return simplex
+      if (index === simplex[0].length || iteracoes.length - 1 === variaveis.length || !temParcelasNegativas(simplex)) return simplex
 
       if (simplex[simplex.length - 1][index] !== 0) {
 
@@ -154,7 +170,10 @@ export default class Simplex extends Component {
     const resultado = recursiva(simplex, 0);
     const solucao = variaveis.map(variavel => {
       const linha = cabecalhoEsquerda.indexOf(variavel)
-      return resultado[linha][resultado[linha].length - 1]
+      if (linha !== -1)
+        return resultado[linha][resultado[linha].length - 1]
+      else
+        return 0
     })
     solucao[solucao.length] = resultado[resultado.length - 1][resultado[0].length - 1]
 
