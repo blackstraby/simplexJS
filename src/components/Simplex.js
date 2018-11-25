@@ -38,26 +38,17 @@ export default class Simplex extends Component {
   componentDidMount = () => {
     const { matriz, listaArtificial, listaFolga, listaCabecalho } = transformarCanonica(this.state.entrada.restricoes);
     converterObjetivo(this.state.entrada.objetivo);
-    console.log(listaCabecalho)
 
+    console.log(listaCabecalho);
     console.log(listaArtificial);
     console.log(listaFolga);
 
     matriz.push(this.state.entrada.objetivo);
 
-    const cabecalhoTopo = this.state.cabecalhoTopo;
-    const variaveis = this.state.variaveis;
-    const cabecalhoEsquerda = this.state.cabecalhoEsquerda;
-    const simplex = this.state.simplex;
-    // const iteracoesCabecalhoEsquerda = this.state.iteracoesCabecalhoEsquerda;
-    const iteracoes = this.state.iteracoes;
-    iteracoes.push(simplex);
-
     const resultado = this.gerarIteracoes(
       this.state.simplex,
       this.state.cabecalhoTopo
     );
-
 
     console.log(resultado)
 
@@ -297,4 +288,3 @@ export default class Simplex extends Component {
     );
   }
 }
-
