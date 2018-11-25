@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { transformarCanonica, converterObjetivo } from "../Utils/conversores";
 import { Table, Divider, Segment, Label } from "semantic-ui-react";
-import * as Problema from "../public/exemplos/ex1";
+import * as Problema from "../public/exemplos/ex2";
 
 export default class Simplex extends Component {
 
@@ -11,14 +11,19 @@ export default class Simplex extends Component {
       entrada: {
         tipo: Problema.tipo,
         objetivo: Problema.objetivo,
-        restricoes: Problema.restricoes
+        restricoes: Problema.restricoes.map(item => item)
       },
-      simplex: Problema.simplex,
-      cabecalhoTopo: Problema.cabecalhoTopo,
-      cabecalhoEsquerda: Problema.cabecalhoEsquerda,
-      variaveis: Problema.variaveis,
+      simplex: [
+        [40, 25, 1, 0, 400],
+        [24, 30, 0, 1, 360],
+        [-520, -450, 0, 0, 0]
+      ],
+      simplex2: Problema.simplex,
+      cabecalhoTopo: Problema.cabecalhoTopo.map(item => item),
+      cabecalhoEsquerda: Problema.cabecalhoEsquerda.map(item => item),
+      variaveis: Problema.variaveis.map(item => item),
       iteracoes: [],
-      iteracoesCabecalhoEsquerda: [Problema.cabecalhoEsquerda],
+      iteracoesCabecalhoEsquerda: [Problema.cabecalhoEsquerda.map(item => item)],
       solucao: [],
       solucoesAlternativas: [],
       casoParticular: "",
@@ -48,13 +53,18 @@ export default class Simplex extends Component {
     const iteracoes = this.state.iteracoes;
     iteracoes.push(simplex);
 
-    this.setState({ simplex })
+    const resultado = this.gerarIteracoes(
+      this.state.simplex,
+      this.state.cabecalhoTopo
+    );
 
-    const resultado = this.gerarIteracoes(simplex, variaveis, cabecalhoEsquerda, cabecalhoTopo);
-    const solucao = variaveis.map(variavel => {
-      const linha = cabecalhoEsquerda.indexOf(variavel)
+
+    console.log(resultado)
+
+    const solucao = this.state.variaveis.map(variavel => {
+      const linha = this.state.iteracoesCabecalhoEsquerda.slice(-1)[0].indexOf(variavel)
       if (linha !== -1)
-        return resultado[linha][resultado[linha].length - 1]
+        return resultado[linha].slice(-1)[0]
       else
         return 0
     })
@@ -71,9 +81,10 @@ export default class Simplex extends Component {
     console.log(solucao)
   }
 
+
   temParcelasNegativas = simplex => simplex[simplex.length - 1].some(item => item < 0)
 
-  gerarIteracoes = (simplex, variaveis, cabecalhoEsquerda, cabecalhoTopo) => {
+  gerarIteracoes = (simplex, cabecalhoTopo) => {
     if (!this.temParcelasNegativas(simplex)) {
       return simplex
     } else {
@@ -92,7 +103,8 @@ export default class Simplex extends Component {
 
       //console.log('Quem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
 
-      simplex[linhaPivo.linha] =
+      // simplex[linhaPivo.linha] =
+      const novaLinhaPivo =
         this.gerarNovaLinhaPivo(simplex, colunaPivo.coluna, linhaPivo.linha);
 
       //Retorna uma nova tabela com as operações feitas. 
@@ -100,24 +112,28 @@ export default class Simplex extends Component {
       //se não, retorna linha antiga - (coeficiente da coluna pivô) * nova linha pivô
       const novoSimplex = simplex.map((linha, posicaoLinha) =>
         (linhaPivo.linha === posicaoLinha) ?
-          linha
+          novaLinhaPivo
           :
           linha.map((item, posicaoColuna) =>
-            item - linha[colunaPivo.coluna] * simplex[linhaPivo.linha][posicaoColuna]
+            item - linha[colunaPivo.coluna] * novaLinhaPivo[posicaoColuna]
           )
       )
 
-      console.log(cabecalhoEsquerda)
-      cabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
-
       const iteracoesCabecalhoEsquerda = this.state.iteracoesCabecalhoEsquerda;
-      iteracoesCabecalhoEsquerda.push(cabecalhoEsquerda);
+
+      const novoCabecalhoEsquerda = iteracoesCabecalhoEsquerda.slice(-1)[0].map(item => item);
+
+      novoCabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
+      // console.log(cabecalhoEsquerda)
+      // cabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
+
+      iteracoesCabecalhoEsquerda.push(novoCabecalhoEsquerda);
 
       const iteracoes = this.state.iteracoes;
       iteracoes.push(novoSimplex);
 
-      this.setState({ iteracoes, cabecalhoEsquerda })
-      return this.gerarIteracoes(novoSimplex, variaveis, cabecalhoEsquerda, cabecalhoTopo)
+      this.setState({ iteracoes, iteracoesCabecalhoEsquerda })
+      return this.gerarIteracoes(novoSimplex, cabecalhoTopo)
     }
   }
 
@@ -207,8 +223,10 @@ export default class Simplex extends Component {
   }
 
   render = () => {
-    const { simplex, iteracoes, iteracoesCabecalhoEsquerda, cabecalhoTopo, cabecalhoEsquerda, variaveis, solucao, casoParticular } = this.state;
-    console.log(Problema.cabecalhoEsquerda)
+    const { simplex, iteracoes, iteracoesCabecalhoEsquerda, cabecalhoTopo, variaveis, solucao, casoParticular } = this.state;
+
+    console.log(this.state.iteracoesCabecalhoEsquerda)
+
     return (
       <div>
         <h3>Quadro de cálculos</h3>
@@ -225,7 +243,7 @@ export default class Simplex extends Component {
               simplex.map((linha, i) => {
                 return (
                   <Table.Row key={i}>
-                    <Table.Cell>{cabecalhoEsquerda[i]}</Table.Cell>
+                    <Table.Cell>{iteracoesCabecalhoEsquerda[0][i]}</Table.Cell>
                     {linha.map((valor, i) => <Table.Cell key={i}>{(valor.toString().indexOf('.') !== -1) ? valor.toFixed('3').replace('.', ',') : valor}</Table.Cell>)}
                   </Table.Row>
                 )
@@ -250,7 +268,7 @@ export default class Simplex extends Component {
                     tabela.map((linha, j) => {
                       return (
                         <Table.Row key={j}>
-                          <Table.Cell>{iteracoesCabecalhoEsquerda[i][j]}</Table.Cell>
+                          <Table.Cell>{iteracoesCabecalhoEsquerda[i + 1][j]}</Table.Cell>
                           {linha.map((valor, i) => <Table.Cell key={i}>{(valor.toString().indexOf('.') !== -1) ? valor.toFixed('3').replace('.', ',') : valor}</Table.Cell>)}
                         </Table.Row>
                       )
@@ -271,7 +289,7 @@ export default class Simplex extends Component {
               {variaveis.map((variavel, i) => {
                 return <h4 key={i}>{`${variavel} = ${solucao[i]}`}</h4>
               })}
-              <h4>Z = {solucao[solucao.length - 1]}</h4>
+              <h4>Z = {solucao.slice(-1)[0]}</h4>
             </div>
           }
         </Segment>
