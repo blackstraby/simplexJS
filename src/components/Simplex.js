@@ -30,44 +30,15 @@ export default class Simplex extends Component {
     console.log("Entrada: ", nextProps.entrada)
   }
 
-  converterMatrix = (m, b) => {
-    //console.log(b)
-    console.log(m);
-    console.log('Base x1\t x2\t f1\t f2\t f3\t b\t')
-    console.log(`f1\t 1\t 0\t 1\t 0\t 0\t ${b[0]}\t`)
-    console.log(`f2\t 0\t 2\t 0\t 1\t 0\t ${b[1]}\t`)
-    console.log(`f3\t 2\t 3\t 0\t 0\t 1\t ${b[2]}\t`)
-    console.log(`Z\t -3\t -5\t 0\t 0\t 0\t ${b[3]}\t`)
-
-  }
-
-  gerarB = m => {
-    let b = []
-
-    m.map((array) => {
-      if (isNaN(array.length - 2)) {
-        return b.push(array[array.length - 1])
-      } else {
-        return b.push(array[array.length - 2] + array[array.length - 1])
-      }
-
-    });
-
-    return b;
-  }
-
   componentDidMount = () => {
-    const { matriz, listaArtificial, listaFolga } = transformarCanonica(this.state.entrada.restricoes);
+    const { matriz, listaArtificial, listaFolga, listaCabecalho } = transformarCanonica(this.state.entrada.restricoes);
     converterObjetivo(this.state.entrada.objetivo);
+    console.log(listaCabecalho)
 
     console.log(listaArtificial);
     console.log(listaFolga);
 
     matriz.push(this.state.entrada.objetivo);
-
-    let b = this.gerarB(matriz);
-
-    this.converterMatrix(matriz, b);
 
     const cabecalhoTopo = this.state.cabecalhoTopo;
     const variaveis = this.state.variaveis;

@@ -1,13 +1,3 @@
-/*
-      TODO
-
-  lista de F (f1, f2, f3)
-  lista de A (a1, a2)
-
-  Retornar cabeçalho do topo e lateral
-
-*/
-
 export const transformarCanonica = (restricoes) => {
   let matriz = [];
   let listaFolga = [];
@@ -19,18 +9,18 @@ export const transformarCanonica = (restricoes) => {
     listaX.push(vetor);
 
     if (restricao.search('<=') !== -1) {
-      listaFolga.push('f' + (listaFolga.length + 1));
+      return listaFolga.push('f' + (listaFolga.length + 1));
     }
 
     else if (restricao.search('>=') !== -1) {
       listaFolga.push('f' + (listaFolga.length + 1));
-      listaArtificial.push('a' + (listaArtificial.length + 1));
+      return listaArtificial.push('a' + (listaArtificial.length + 1));
     }
 
     else if (restricao.search('=') !== -1) {
-      listaArtificial.push('a' + (listaArtificial.length + 1));
+      return listaArtificial.push('a' + (listaArtificial.length + 1));
     }
-
+    return false;
   });
 
 
@@ -40,12 +30,17 @@ export const transformarCanonica = (restricoes) => {
   });
 
   //console.log(listaX)
-  gerarListaDeX(listaX)
+  let listaCabecalho = gerarListaDeX(listaX)
+  listaFolga.map(item => listaCabecalho.push(item))
+  listaArtificial.map(item => listaCabecalho.push(item))
+  listaCabecalho.push('b')
+  console.log(listaCabecalho)
 
   let matrizCanonica = {
     matriz,
     listaFolga,
     listaArtificial,
+    listaCabecalho
   }
   return matrizCanonica;
 }
@@ -96,17 +91,17 @@ const validarExpressao = (expressao, i, listaF, listaA) => {
 
 const gerarListaDeX = (listaX) => {
   let novaListaX = []
-  console.log(listaX)
 
   listaX.map((itemX) => {
-    itemX.map((item) => { novaListaX.push(item) });
+    return itemX.map((item) => { return novaListaX.push(item) });
   })
 
   //GERA LISTA X sem repetir para montar o cabeçalho posteriormente
   novaListaX = novaListaX.filter(function (elemento, i) {
-    return novaListaX.indexOf(elemento) == i;
-  })
-  console.log(novaListaX)
+    return novaListaX.indexOf(elemento) === i;
+  });
+
+  return novaListaX;
 
 }
 
