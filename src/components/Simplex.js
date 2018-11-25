@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { transformarCanonica, converterObjetivo } from "../Utils/conversores";
 import { Table, Divider, Segment, Label } from "semantic-ui-react";
-import * as Problema from "../public/exemplos/ex2";
+import * as Problema from "../public/exemplos/ex6";
 
 export default class Simplex extends Component {
 
@@ -13,12 +13,7 @@ export default class Simplex extends Component {
         objetivo: Problema.objetivo,
         restricoes: Problema.restricoes.map(item => item)
       },
-      simplex: [
-        [40, 25, 1, 0, 400],
-        [24, 30, 0, 1, 360],
-        [-520, -450, 0, 0, 0]
-      ],
-      simplex2: Problema.simplex,
+      simplex: Problema.simplex.map(item => item),
       cabecalhoTopo: Problema.cabecalhoTopo.map(item => item),
       cabecalhoEsquerda: Problema.cabecalhoEsquerda.map(item => item),
       variaveis: Problema.variaveis.map(item => item),
@@ -83,18 +78,19 @@ export default class Simplex extends Component {
       // console.log('coluna pivo', colunaPivo)
 
       let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
-      //console.log('linha pivo', linhaPivo)
+      // if (this.state.iteracoes.length === 0) linhaPivo.linha = 0;
+      // console.log('linha pivo', linhaPivo)
 
       //ÓTIMO NÃO FINITO
       //Retorna se todos os itens da coluna pivô não são positivos (são todos <= 0)
       if (simplex.every(linha => linha[colunaPivo.coluna] <= 0)) {
-        this.setState({ casoParticular: "Ótimo não finito" })
+        this.setState({ casoParticular: "Solução ótimo não finito" })
+        console.log("##### SOLUÇÃO ÓTIMO NÃO FINITO")
         return simplex
       }
 
       //console.log('Quem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
 
-      // simplex[linhaPivo.linha] =
       const novaLinhaPivo =
         this.gerarNovaLinhaPivo(simplex, colunaPivo.coluna, linhaPivo.linha);
 
@@ -110,14 +106,20 @@ export default class Simplex extends Component {
           )
       )
 
-      const iteracoesCabecalhoEsquerda = this.state.iteracoesCabecalhoEsquerda;
+      //DEGENERESCÊNCIA
+      //Se há pelo menos uma solução básica viável com uma variável básica com valor zero (=0). 
+      //Se há, essa solução é uma solução básica viável degenerada.
+      novoSimplex.forEach(linha => {
+        if (linha.slice(-1)[0] === 0) {
+          this.setState({ casoParticular: "Solução ótima e degenerada" })
+          console.log("##### SOLUÇÃO DEGENERADA")
+        }
+      });
 
+      const iteracoesCabecalhoEsquerda = this.state.iteracoesCabecalhoEsquerda;
       const novoCabecalhoEsquerda = iteracoesCabecalhoEsquerda.slice(-1)[0].map(item => item);
 
       novoCabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
-      // console.log(cabecalhoEsquerda)
-      // cabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
-
       iteracoesCabecalhoEsquerda.push(novoCabecalhoEsquerda);
 
       const iteracoes = this.state.iteracoes;
@@ -242,6 +244,7 @@ export default class Simplex extends Component {
             }
           </Table.Body>
         </Table>
+        <Divider hidden />
         {iteracoes.map((tabela, i) => {
           return (
             <div key={i}>
@@ -281,6 +284,8 @@ export default class Simplex extends Component {
                 return <h4 key={i}>{`${variavel} = ${solucao[i]}`}</h4>
               })}
               <h4>Z = {solucao.slice(-1)[0]}</h4>
+              <br />
+              <Label color='purple'>Solução básica</Label>
             </div>
           }
         </Segment>
