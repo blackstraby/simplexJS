@@ -20,3 +20,8 @@ body {
 .tabela-simplex {
   text-align: center !important;
 }
+
+.ajuste {
+  color: crimson;
+  font-weight: 900;
+}

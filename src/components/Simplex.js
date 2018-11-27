@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { transformarCanonica, converterObjetivo, formatarValor } from "../Utils/conversores";
 import { Table, Divider, Segment, Label } from "semantic-ui-react";
-import * as Problema from "../public/exemplos/ex1";
+import * as Problema from "../public/exemplos/ex8";
 
 export default class Simplex extends Component {
 
@@ -19,6 +19,7 @@ export default class Simplex extends Component {
       cabecalhoEsquerda: Problema.cabecalhoEsquerda.map(item => item),
       variaveis: Problema.variaveis.map(item => item),
       iteracoes: [],
+      ajustes: [],
       iteracoesCabecalhoEsquerda: [Problema.cabecalhoEsquerda.map(item => item)],
       solucao: [],
       solucoesAlternativas: [],
@@ -55,12 +56,21 @@ export default class Simplex extends Component {
             return valor - this.state.bigM * simplex[index][i]
           })
           simplex[simplex.length - 1] = novaLinha;
-          this.setState({ simplex })
+
+          const ajustes = this.state.ajustes;
+          ajustes.push(simplex.map(item => item));
+
+          this.setState({ ajustes })
+          // this.setState({ simplex })
         }
       });
     }
 
-    const resultado = this.gerarIteracoes(simplex, 0);
+
+    const resultado = (this.state.ajustes.length > 0) ?
+      this.gerarIteracoes(this.state.ajustes.slice(-1)[0], 0)
+      :
+      this.gerarIteracoes(simplex, 0)
 
     const solucao = this.state.iteracoesCabecalhoEsquerda.slice(-1)[0].map(variavel => {
       const linha = this.state.iteracoesCabecalhoEsquerda.slice(-1)[0].indexOf(variavel)
@@ -248,7 +258,7 @@ export default class Simplex extends Component {
   }
 
   render = () => {
-    const { simplex, iteracoes, iteracoesCabecalhoEsquerda, cabecalhoTopo, solucao, casoParticular } = this.state;
+    const { simplex, iteracoes, iteracoesCabecalhoEsquerda, cabecalhoTopo, solucao, casoParticular, ajustes } = this.state;
 
     console.log(this.state.iteracoesCabecalhoEsquerda)
 
@@ -269,7 +279,13 @@ export default class Simplex extends Component {
                 return (
                   <Table.Row key={i}>
                     <Table.Cell>{iteracoesCabecalhoEsquerda[0][i]}</Table.Cell>
-                    {linha.map((valor, i) => <Table.Cell key={i}>{(valor.toString().indexOf('.') !== -1) ? valor.toFixed('3').replace('.', ',') : valor}</Table.Cell>)}
+                    {linha.map((valor, iCelula) =>
+                      <Table.Cell
+                        key={iCelula}
+                        className={(cabecalhoTopo[iCelula].indexOf('a' + 1) > -1 && i === simplex.length - 1) ? "ajuste" : ""}
+                      >
+                        {formatarValor(valor)}
+                      </Table.Cell>)}
                   </Table.Row>
                 )
               })
@@ -277,10 +293,52 @@ export default class Simplex extends Component {
           </Table.Body>
         </Table>
         <Divider hidden />
+        {(ajustes.length > 0) ?
+          ajustes.map((tabela, i) => {
+            return (
+              <div key={i}>
+                <h3>{i + 1}ª Ajuste</h3>
+                <Divider hidden />
+                <Table celled className="tabela-simplex">
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.HeaderCell>BASE</Table.HeaderCell>
+                      {cabecalhoTopo.map((valor, i) => <Table.HeaderCell key={i}>{valor}</Table.HeaderCell>)}
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {
+                      tabela.map((linha, j) => {
+                        return (
+                          <Table.Row key={j}>
+                            <Table.Cell>{iteracoesCabecalhoEsquerda[i + 1][j]}</Table.Cell>
+                            {linha.map((valor, iCelula) =>
+                              <Table.Cell
+                                key={iCelula}
+                                className={
+                                  (cabecalhoTopo[iCelula].indexOf('a' + (i + 1 + 1)) > -1 && j === simplex.length - 1) ? "ajuste" : ""
+                                }
+                              >
+                                {formatarValor(valor)}
+                              </Table.Cell>)
+                            }
+                          </Table.Row>
+                        )
+                      })
+                    }
+                  </Table.Body>
+                </Table>
+                <Divider hidden />
+              </div>
+            )
+          })
+          :
+          (false)
+        }
         {iteracoes.map((tabela, i) => {
           return (
             <div key={i}>
-              <h3>{i + 1}ª iteração</h3>
+              <h3>{i + 1}ª Iteração</h3>
               <Divider hidden />
               <Table celled className="tabela-simplex">
                 <Table.Header>
@@ -312,7 +370,6 @@ export default class Simplex extends Component {
             :
             <Label color='purple'>Solução básica</Label>
           }
-
           <div>
             <Divider />
             <h3>Solução:</h3>
