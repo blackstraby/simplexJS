@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
-import { transformarCanonica, converterObjetivo } from "../Utils/conversores";
+import { transformarCanonica, converterObjetivo, formatarValor } from "../Utils/conversores";
 import { Table, Divider, Segment, Label } from "semantic-ui-react";
-import * as Problema from "../public/exemplos/ex6";
+import * as Problema from "../public/exemplos/ex1";
 
 export default class Simplex extends Component {
 
   constructor(props) {
     super(props);
     this.state = {
+      bigM: 999999,
       entrada: {
         tipo: Problema.tipo,
         objetivo: Problema.objetivo,
@@ -40,93 +41,106 @@ export default class Simplex extends Component {
 
     matriz.push(this.state.entrada.objetivo);
 
-    const resultado = this.gerarIteracoes(
-      this.state.simplex,
-      this.state.cabecalhoTopo
-    );
+    const simplex = this.state.simplex.map(linha => linha)
 
-    console.log(resultado)
+    if (this.state.cabecalhoTopo.some(item => item.includes('a'))) {
+      this.setState({ casoParticular: "Variáveis artificiais - Método BIG M" })
+      console.log("##### SOLUÇÃO VARIÁVEIS ARTIFICIAIS - BIG M")
+      const cabecalhoEsquerda = this.state.cabecalhoEsquerda.map(item => item)
+      cabecalhoEsquerda.forEach((item, index) => {
+        const linha = item.indexOf('a');
 
-    const solucao = this.state.variaveis.map(variavel => {
+        if (linha > -1) {
+          const novaLinha = simplex[simplex.length - 1].map((valor, i) => {
+            return valor - this.state.bigM * simplex[index][i]
+          })
+          simplex[simplex.length - 1] = novaLinha;
+          this.setState({ simplex })
+        }
+      });
+    }
+
+    const resultado = this.gerarIteracoes(simplex, 0);
+
+    const solucao = this.state.iteracoesCabecalhoEsquerda.slice(-1)[0].map(variavel => {
       const linha = this.state.iteracoesCabecalhoEsquerda.slice(-1)[0].indexOf(variavel)
       if (linha !== -1)
         return resultado[linha].slice(-1)[0]
       else
         return 0
     })
-    solucao[solucao.length] = resultado[resultado.length - 1][resultado[0].length - 1]
+    // solucao[solucao.length] = resultado[resultado.length - 1][resultado[0].length - 1]
 
-    //SOLUÇÕES ALTERNATIVAS
-    // variaveis.map(variavel => {
-    //   const coluna = cabecalhoTopo.indexOf(variavel)
-    //   if (coluna !== -1) {
-
-    //   }
-    // })
     this.setState({ solucao })
-    console.log(solucao)
   }
-
 
   temParcelasNegativas = simplex => simplex[simplex.length - 1].some(item => item < 0)
 
-  gerarIteracoes = (simplex, cabecalhoTopo) => {
-    if (!this.temParcelasNegativas(simplex)) {
-      return simplex
-    } else {
-      let colunaPivo = this.getColunaPivo(simplex[simplex.length - 1])
-      // console.log('coluna pivo', colunaPivo)
+  otimoNaoFinito = (simplex, colunaPivo) => (simplex.every(linha => linha[colunaPivo] <= 0))
 
-      let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
-      // if (this.state.iteracoes.length === 0) linhaPivo.linha = 0;
-      // console.log('linha pivo', linhaPivo)
-
-      //ÓTIMO NÃO FINITO
-      //Retorna se todos os itens da coluna pivô não são positivos (são todos <= 0)
-      if (simplex.every(linha => linha[colunaPivo.coluna] <= 0)) {
-        this.setState({ casoParticular: "Solução ótimo não finito" })
-        console.log("##### SOLUÇÃO ÓTIMO NÃO FINITO")
+  gerarIteracoes = (simplex, cont) => {
+    cont++
+    // console.log(cont)
+    if (cont < 6) {
+      if (!this.temParcelasNegativas(simplex)) {
         return simplex
-      }
+      } else {
+        // console.log("&&&&#####", simplex.map(item => item))
+        let colunaPivo = this.getColunaPivo(simplex[simplex.length - 1])
+        console.log('coluna pivo', colunaPivo)
 
-      //console.log('Quem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
+        let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
+        console.log('linha pivo', linhaPivo)
 
-      const novaLinhaPivo =
-        this.gerarNovaLinhaPivo(simplex, colunaPivo.coluna, linhaPivo.linha);
-
-      //Retorna uma nova tabela com as operações feitas. 
-      //Se for a linha pivô retorna ela mesmo,
-      //se não, retorna linha antiga - (coeficiente da coluna pivô) * nova linha pivô
-      const novoSimplex = simplex.map((linha, posicaoLinha) =>
-        (linhaPivo.linha === posicaoLinha) ?
-          novaLinhaPivo
-          :
-          linha.map((item, posicaoColuna) =>
-            item - linha[colunaPivo.coluna] * novaLinhaPivo[posicaoColuna]
-          )
-      )
-
-      //DEGENERESCÊNCIA
-      //Se há pelo menos uma solução básica viável com uma variável básica com valor zero (=0). 
-      //Se há, essa solução é uma solução básica viável degenerada.
-      novoSimplex.forEach(linha => {
-        if (linha.slice(-1)[0] === 0) {
-          this.setState({ casoParticular: "Solução ótima e degenerada" })
-          console.log("##### SOLUÇÃO DEGENERADA")
+        //ÓTIMO NÃO FINITO
+        //Retorna se todos os itens da coluna pivô não são positivos (são todos <= 0)
+        if (this.otimoNaoFinito(simplex, colunaPivo.coluna)) {
+          this.setState({ casoParticular: "Solução ótimo não finito" })
+          console.log("##### SOLUÇÃO ÓTIMO NÃO FINITO")
+          return simplex
         }
-      });
 
-      const iteracoesCabecalhoEsquerda = this.state.iteracoesCabecalhoEsquerda;
-      const novoCabecalhoEsquerda = iteracoesCabecalhoEsquerda.slice(-1)[0].map(item => item);
+        //console.log('Quem sai', simplex[linhaPivo.linha][colunaPivo.coluna])
 
-      novoCabecalhoEsquerda[linhaPivo.linha] = cabecalhoTopo[colunaPivo.coluna];
-      iteracoesCabecalhoEsquerda.push(novoCabecalhoEsquerda);
+        const novaLinhaPivo =
+          this.gerarNovaLinhaPivo(simplex, colunaPivo.coluna, linhaPivo.linha);
 
-      const iteracoes = this.state.iteracoes;
-      iteracoes.push(novoSimplex);
+        //Retorna uma nova tabela com as operações feitas. 
+        //Se for a linha pivô retorna ela mesmo,
+        //se não, retorna linha antiga - (coeficiente da coluna pivô) * nova linha pivô
+        const novoSimplex = simplex.map((linha, posicaoLinha) =>
+          (linhaPivo.linha === posicaoLinha) ?
+            novaLinhaPivo
+            :
+            linha.map((item, posicaoColuna) =>
+              item - linha[colunaPivo.coluna] * novaLinhaPivo[posicaoColuna]
+            )
+        )
 
-      this.setState({ iteracoes, iteracoesCabecalhoEsquerda })
-      return this.gerarIteracoes(novoSimplex, cabecalhoTopo)
+        //DEGENERESCÊNCIA
+        //Se há pelo menos uma solução básica viável com uma variável básica com valor zero (=0). 
+        //Se há, essa solução é uma solução básica viável degenerada.
+        novoSimplex.forEach(linha => {
+          if (linha[linha.length - 1] === 0) {
+            this.setState({ casoParticular: "Solução ótima e degenerada" })
+            console.log("##### SOLUÇÃO DEGENERADA")
+          }
+        });
+
+        const iteracoesCabecalhoEsquerda = this.state.iteracoesCabecalhoEsquerda;
+        const novoCabecalhoEsquerda = iteracoesCabecalhoEsquerda.slice(-1)[0].map(item => item);
+
+        novoCabecalhoEsquerda[linhaPivo.linha] = this.state.cabecalhoTopo[colunaPivo.coluna];
+        iteracoesCabecalhoEsquerda.push(novoCabecalhoEsquerda);
+
+        const iteracoes = this.state.iteracoes;
+        iteracoes.push(novoSimplex);
+
+        this.setState({ iteracoes, iteracoesCabecalhoEsquerda })
+        return this.gerarIteracoes(novoSimplex, cont)
+      }
+    } else {
+      return simplex
     }
   }
 
@@ -135,9 +149,8 @@ export default class Simplex extends Component {
       coluna: 0,
       valor: 0
     }
-
     let maior = 0;
-    for (let i = 0; i < simplex.length; i++) {
+    for (let i = 0; i < simplex.length - 1; i++) {
       if (Math.abs(simplex[i]) > maior && simplex[i] < 0) {
         maior = Math.abs(simplex[i]);
         pivo.coluna = i;
@@ -153,6 +166,7 @@ export default class Simplex extends Component {
     let b = [];
     let entrada = [];
     let processoProducao = [];
+    let linhas = [];
 
     let tamSimplex = simplex.length;
 
@@ -172,9 +186,13 @@ export default class Simplex extends Component {
         entrada.push(objEntrada)
 
         try {
-          let valorPp = obj.valor / objEntrada.valor
-          return processoProducao.push(valorPp)
-
+          if (objEntrada.valor < 0) {
+            return processoProducao;
+          } else {
+            let valorPp = obj.valor / objEntrada.valor
+            linhas[indice] = { valorPp, linha: indice }
+            return processoProducao.push(valorPp)
+          }
         } catch (error) {
           console.log(error)
         }
@@ -188,11 +206,25 @@ export default class Simplex extends Component {
       valor: Math.min(...processoProducao) //menor valor do processo de producao
     }
 
-    processoProducao.map((valor, i) => {
-      if (valor === linhaPivo.valor)
-        return linhaPivo.linha = i
-      return null;
-    })
+    //ordena para que o primeiro item seja a linha com menor valor
+    linhas.sort(function (a, b) {
+      if (a.valorPp > b.valorPp) {
+        return 1;
+      }
+      if (a.valorPp < b.valorPp) {
+        return -1;
+      }
+      return 0;
+    });
+
+    // processoProducao.map((valor, i) => {
+    //   if (valor === linhaPivo.valor)
+    //     return linhaPivo.linha = i
+    //   return null;
+    // })
+
+    linhaPivo.valor = linhas[0].valorPp;
+    linhaPivo.linha = linhas[0].linha;
 
     //retorna objeto contendo a linha e o valor dele no simplex
     return linhaPivo;
@@ -216,7 +248,7 @@ export default class Simplex extends Component {
   }
 
   render = () => {
-    const { simplex, iteracoes, iteracoesCabecalhoEsquerda, cabecalhoTopo, variaveis, solucao, casoParticular } = this.state;
+    const { simplex, iteracoes, iteracoesCabecalhoEsquerda, cabecalhoTopo, solucao, casoParticular } = this.state;
 
     console.log(this.state.iteracoesCabecalhoEsquerda)
 
@@ -263,7 +295,7 @@ export default class Simplex extends Component {
                       return (
                         <Table.Row key={j}>
                           <Table.Cell>{iteracoesCabecalhoEsquerda[i + 1][j]}</Table.Cell>
-                          {linha.map((valor, i) => <Table.Cell key={i}>{(valor.toString().indexOf('.') !== -1) ? valor.toFixed('3').replace('.', ',') : valor}</Table.Cell>)}
+                          {linha.map((valor, i) => <Table.Cell key={i}>{formatarValor(valor)}</Table.Cell>)}
                         </Table.Row>
                       )
                     })
@@ -278,16 +310,16 @@ export default class Simplex extends Component {
           {(casoParticular) ?
             <h3>Caso particular: &nbsp;<Label color='purple'>{casoParticular}</Label></h3>
             :
-            <div>
-              <h3>Solução:</h3>
-              {variaveis.map((variavel, i) => {
-                return <h4 key={i}>{`${variavel} = ${solucao[i]}`}</h4>
-              })}
-              <h4>Z = {solucao.slice(-1)[0]}</h4>
-              <br />
-              <Label color='purple'>Solução básica</Label>
-            </div>
+            <Label color='purple'>Solução básica</Label>
           }
+
+          <div>
+            <Divider />
+            <h3>Solução:</h3>
+            {iteracoesCabecalhoEsquerda.slice(-1)[0].map((variavel, i) => {
+              return <h4 key={i}>{`${variavel} = ${solucao[i]}`}</h4>
+            })}
+          </div>
         </Segment>
       </div>
     );

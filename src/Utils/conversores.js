@@ -170,3 +170,5 @@ export const converterObjetivo = (objetivoZ) => {
   return objCanonico;
 
 }
+
+export const formatarValor = valor => (valor.toString().indexOf('.') !== -1) ? valor.toFixed('2').replace('.', ',') : valor
