@@ -1,6 +1,7 @@
 //Autores: Jonas Silva Gomes e Rafael Souza de Lana
 export const transformarCanonica = (restricoes) => {
   let matriz = [];
+  let matrizNumerica = []
   let listaFolga = [];
   let listaArtificial = [];
   let listaX = [];
@@ -32,18 +33,69 @@ export const transformarCanonica = (restricoes) => {
 
   //console.log(listaX)
   let listaCabecalho = gerarListaDeX(listaX)
+  let listaCabecalhoEsquerda = getCabecalhoEsquerda(listaFolga, listaArtificial)
+
   listaFolga.map(item => listaCabecalho.push(item))
   listaArtificial.map(item => listaCabecalho.push(item))
+
+  listaCabecalhoEsquerda.push('z')
   listaCabecalho.push('b')
-  console.log(listaCabecalho)
+
+  matrizNumerica = getMatrizNumerica(matriz)
 
   let matrizCanonica = {
-    matriz,
+    matriz, //restricoes
     listaFolga,
     listaArtificial,
-    listaCabecalho
+    listaCabecalho,
+    listaCabecalhoEsquerda,
+    matrizNumerica //valor acompanhado das restricoes
   }
   return matrizCanonica;
+}
+
+const getMatrizNumerica = (matriz) => {
+  let matrizNumerica = []
+
+  matriz.map((linha, i) => {
+
+    let linhaNumerica = []
+
+    for (let index = 0; index < linha.length; index++) {
+      const elemento = linha[index];
+
+      if (elemento === 'x' && linha[index - 1] === undefined) {
+        linhaNumerica.push(1)
+
+      } else if (elemento === 'x' && !isNaN(linha[index - 1])) {
+        linhaNumerica.push(Number(linha[index - 1]))
+
+      } else if (elemento === 'f' && !isNaN(linha[index - 1])) {
+        linhaNumerica.push(1)
+      } else if (elemento === '=') {
+        if (!isNaN(linha[linha.length - 1]) && !isNaN(linha[linha.length - 2])) {
+          linhaNumerica.push(Number(linha[linha.length - 2] + linha[linha.length - 1]))
+        } else {
+          linhaNumerica.push(Number(linha[linha.length - 1]))
+        }
+      }
+    }
+    return matrizNumerica.push(linhaNumerica)
+
+  })
+  return matrizNumerica;
+}
+
+const getCabecalhoEsquerda = (listaFolga, listaArtificial) => {
+  let listaCabecalhoEsquerda = []
+  if (listaFolga.length > 0)
+    listaFolga.map(item => listaCabecalhoEsquerda.push(item))
+
+
+  if (listaArtificial.length > 0)
+    listaArtificial.map(item => listaCabecalhoEsquerda.push(item))
+
+  return listaCabecalhoEsquerda;
 }
 
 const validarExpressao = (expressao, i, listaF, listaA) => {
@@ -70,9 +122,18 @@ const validarExpressao = (expressao, i, listaF, listaA) => {
     listaF[indiceFolgalAux] = listaF[0]
   }
 
+  // Colocar os F de acordo com x1, x2 ou x3
   if (expressao.search('<=') !== -1) {
-    if (expressao.search(listaX[0]) !== -1)
-      exp = expressao.replace(listaX[0], listaX[0] + ' + ' + listaF[indiceFolgalAux]);
+    if (expressao.search(listaX[0]) !== -1) {
+      if (listaX[2] === undefined && listaX[1] === undefined)
+        exp = expressao.replace(listaX[0], listaX[0] + ' + ' + listaF[indiceFolgalAux]);
+      if (listaX[2] !== undefined)
+        exp = expressao.replace(listaX[2], listaX[2] + ' + ' + listaF[indiceFolgalAux]);
+      if (listaX[1] !== undefined)
+        exp = expressao.replace(listaX[1], listaX[1] + ' + ' + listaF[indiceFolgalAux]);
+      else
+        exp = expressao.replace(listaX[0], listaX[0] + ' + ' + listaF[indiceFolgalAux]);
+    }
     return exp.replace('<=', '=');
   }
 
@@ -167,9 +228,11 @@ export const converterObjetivo = (objetivoZ) => {
     return objCanonico;
   });
 
-  console.log(objCanonico);
+  //console.log(objCanonico);
   return objCanonico;
 
 }
 
-export const formatarValor = valor => (valor.toString().indexOf('.') !== -1) ? valor.toFixed('2').replace('.', ',') : valor
+export const formatarValor = valor => (valor.toString().indexOf('.') !== -1)
+  ? valor.toFixed('2').replace('.', ',')
+  : valor

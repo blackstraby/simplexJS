@@ -34,12 +34,12 @@ export default class Simplex extends Component {
   }
 
   componentDidMount = () => {
-    const { matriz, listaArtificial, listaFolga, listaCabecalho } = transformarCanonica(this.state.entrada.restricoes);
+    const { matriz, matrizNumerica, listaCabecalho, listaCabecalhoEsquerda } = transformarCanonica(this.state.entrada.restricoes);
     converterObjetivo(this.state.entrada.objetivo);
 
     console.log(listaCabecalho);
-    console.log(listaArtificial);
-    console.log(listaFolga);
+    console.log(listaCabecalhoEsquerda);
+    console.log(matrizNumerica);
 
     matriz.push(this.state.entrada.objetivo);
 
