@@ -68,12 +68,25 @@ const getMatrizNumerica = (matriz) => {
         linhaNumerica.push(1)
 
       } else if (elemento === 'x' && !isNaN(linha[index - 1])) {
-        linhaNumerica.push(Number(linha[index - 1]))
+        if (!isNaN(linha[index - 2]) && !isNaN(linha[index - 1])) {
+          let n = linha[index - 2] + linha[index - 1]
+          linhaNumerica.push(Number(n))
+        } else {
+          linhaNumerica.push(Number(linha[index - 1]))
+        }
 
       } else if (elemento === 'f' && !isNaN(linha[index - 1])) {
         linhaNumerica.push(1)
+
+      } else if (elemento === 'a' && !isNaN(linha[index - 1])) {
+        linhaNumerica.push(1)
+
       } else if (elemento === '=') {
-        if (!isNaN(linha[linha.length - 1]) && !isNaN(linha[linha.length - 2])) {
+        if (!isNaN(linha[linha.length - 2]) && !isNaN(linha[linha.length - 3])) {
+          let n = linha[linha.length - 3] + linha[linha.length - 2] + linha[linha.length - 1]
+          linhaNumerica.push(Number(n))
+        }
+        else if (!isNaN(linha[linha.length - 1]) && !isNaN(linha[linha.length - 2])) {
           linhaNumerica.push(Number(linha[linha.length - 2] + linha[linha.length - 1]))
         } else {
           linhaNumerica.push(Number(linha[linha.length - 1]))
@@ -84,6 +97,40 @@ const getMatrizNumerica = (matriz) => {
 
   })
   return matrizNumerica;
+}
+
+export const geObjetivoNumerico = (linha) => {
+  let linhaNumerica = []
+  for (let index = 0; index < linha.length; index++) {
+    const elemento = linha[index];
+
+    if (elemento === 'x' && linha[index - 1] === undefined) {
+      linhaNumerica.push(1)
+
+    } else if (elemento === 'x' && !isNaN(linha[index - 1])) {
+      if (!isNaN(linha[index - 2]) && !isNaN(linha[index - 3])) {
+        let n = linha[index - 3] + linha[index - 2] + linha[index - 1]
+        linhaNumerica.push(Number(n))
+      } else if (!isNaN(linha[index - 2]) && !isNaN(linha[index - 1])) {
+        let n = linha[index - 2] + linha[index - 1]
+        linhaNumerica.push(Number(n))
+      } else {
+        linhaNumerica.push(Number(linha[index - 1]))
+      }
+
+    } else if (elemento === '=') {
+      if (!isNaN(linha[linha.length - 2]) && !isNaN(linha[linha.length - 3])) {
+        let n = linha[linha.length - 3] + linha[linha.length - 2] + linha[linha.length - 1]
+        linhaNumerica.push(Number(n))
+      }
+      else if (!isNaN(linha[linha.length - 1]) && !isNaN(linha[linha.length - 2])) {
+        linhaNumerica.push(Number(linha[linha.length - 2] + linha[linha.length - 1]))
+      } else {
+        linhaNumerica.push(Number(linha[linha.length - 1]))
+      }
+    }
+  }
+  return linhaNumerica
 }
 
 const getCabecalhoEsquerda = (listaFolga, listaArtificial) => {

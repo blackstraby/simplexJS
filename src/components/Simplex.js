@@ -1,9 +1,9 @@
 //Autores: Jonas Silva Gomes e Rafael Souza de Lana
 import React, { Component } from 'react';
-import { transformarCanonica, converterObjetivo, formatarValor } from "../Utils/conversores";
+import { transformarCanonica, converterObjetivo, formatarValor, geObjetivoNumerico } from "../Utils/conversores";
 import { Table, Divider, Segment, Label } from "semantic-ui-react";
 import * as Problema from "../public/exemplos/ex1";
-
+import simplex1 from "../public/jsons/ex1";
 export default class Simplex extends Component {
 
   constructor(props) {
@@ -34,14 +34,18 @@ export default class Simplex extends Component {
   }
 
   componentDidMount = () => {
-    const { matriz, matrizNumerica, listaCabecalho, listaCabecalhoEsquerda } = transformarCanonica(this.state.entrada.restricoes);
-    converterObjetivo(this.state.entrada.objetivo);
+    let { matriz, matrizNumerica, listaCabecalho, listaCabecalhoEsquerda } = transformarCanonica(simplex1.restricoes);
+    converterObjetivo(simplex1.objetivo);
+
+    let objetivo = geObjetivoNumerico(simplex1.objetivo)
+   
+    matrizNumerica.push(objetivo);
 
     console.log(listaCabecalho);
     console.log(listaCabecalhoEsquerda);
     console.log(matrizNumerica);
 
-    matriz.push(this.state.entrada.objetivo);
+    matriz.push(simplex1.objetivo);
 
     const simplex = this.state.simplex.map(linha => linha)
 
