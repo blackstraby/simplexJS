@@ -1,0 +1,8 @@
+{
+  "tipo": "max",
+  "objetivo": "6x1 + 10x2 = 0",
+  "restricoes": [
+    "-x1 + x2 <= 1",
+    "-3x1 + 3x2 <= 6"
+  ]
+}

@@ -1,7 +1,7 @@
 //Autores: Jonas Silva Gomes e Rafael Souza de Lana
 import React, { Component } from 'react';
 import Simplex from "./components/Simplex";
-import jsonExemplo from "./public/jsons/simplex1.json";
+import jsonExemplo from "./public/jsons/ex1.json";
 import { Container, Segment, Grid, Button, Icon, Input, Divider, Label } from "semantic-ui-react";
 
 class App extends Component {
