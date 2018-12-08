@@ -1,3 +1,4 @@
+//Autores: Jonas Silva Gomes e Rafael Souza de Lana
 import React, { Component } from 'react';
 import Simplex from "./components/Simplex";
 import jsonExemplo from "./public/jsons/simplex1.json";

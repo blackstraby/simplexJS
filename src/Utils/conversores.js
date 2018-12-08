@@ -1,3 +1,4 @@
+//Autores: Jonas Silva Gomes e Rafael Souza de Lana
 export const transformarCanonica = (restricoes) => {
   let matriz = [];
   let listaFolga = [];
