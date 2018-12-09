@@ -4,7 +4,6 @@ export const restricoes = [
   'x1 <= 4',
   '2x2 <= 12',
   '2x1 + 3x2 <= 21',
-  //x1 >= 0 e x2 >= 0
 ]
 
 export const cabecalhoTopo = ['x1', 'x2', 'f1', 'f2', 'f3', 'b'];

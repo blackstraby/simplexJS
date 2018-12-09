@@ -39,10 +39,11 @@ export const transformarCanonica = (restricoes, objetivo) => {
 
   //console.log(listaX)
   let listaCabecalho = gerarListaDeX(listaX)
-  let listaCabecalhoEsquerda = getCabecalhoEsquerda(listaFolga, listaArtificial)
 
   listaFolga.map(item => listaCabecalho.push(item))
   listaArtificial.map(item => listaCabecalho.push(item))
+
+  let listaCabecalhoEsquerda = getCabecalhoEsquerda(listaFolga, listaArtificial, listaCabecalho, restricoes)
 
   listaCabecalhoEsquerda.push('z')
   listaCabecalho.push('b')
@@ -111,41 +112,46 @@ const getMatrizNumerica = (matriz, topo) => {
   return m;
 }
 
-const getCabecalhoEsquerda = (listaFolga, listaArtificial) => {
+// const getCabecalhoEsquerda = (listaFolga, listaArtificial) => {
+//   let listaCabecalhoEsquerda = []
+//   if (listaFolga.length > 0)
+//     listaFolga.map(item => listaCabecalhoEsquerda.push(item))
+
+
+//   if (listaArtificial.length > 0)
+//     listaArtificial.map(item => listaCabecalhoEsquerda.push(item))
+
+//   return listaCabecalhoEsquerda;
+// }
+
+const getCabecalhoEsquerda = (listaFolga, listaArtificial, listaCabecalho, restricoes) => {
   let listaCabecalhoEsquerda = []
-  if (listaFolga.length > 0)
-    listaFolga.map(item => listaCabecalhoEsquerda.push(item))
 
+  const tamRestricoes = restricoes.length;
+  const tamanhoListaA = listaArtificial.length
 
-  if (listaArtificial.length > 0)
-    listaArtificial.map(item => listaCabecalhoEsquerda.push(item))
+  const quantidadeFs = tamRestricoes - tamanhoListaA;
+
+  listaFolga.forEach((valor, i) => {
+    if (i < quantidadeFs) {
+      listaCabecalhoEsquerda.push(valor);
+    }
+  })
+
+  listaArtificial.forEach((valor, i) => {
+    if (i < tamanhoListaA) {
+      listaCabecalhoEsquerda.push(valor);
+    }
+  })
+
+  console.log(listaCabecalhoEsquerda)
 
   return listaCabecalhoEsquerda;
 }
 
 const validarExpressao = (expressao, i, listaF, listaA) => {
   let exp = '';
-  // let indiceArtificialAux = 0;
-  // let indiceFolgalAux = 0;
-
   let listaX = mapearExpressao(expressao.replace(/\s+/g, ''));
-
-  // if (listaA.length < i) {
-  //   indiceArtificialAux = i - listaA.length
-  // } else if (listaA.length > i) {
-  //   indiceArtificialAux = i
-  // }
-
-  //Valida lista de F para nao chegar um indice que nao existe
-  // if (listaF.length < i) {
-  //   indiceFolgalAux = i - listaF.length
-  // } else if (listaF.length > i) {
-  //   indiceFolgalAux = i
-  // }
-
-  // if (listaF[indiceFolgalAux] === undefined) {
-  //   listaF[indiceFolgalAux] = listaF[0]
-  // }
 
   // Colocar os F de acordo com x1, x2 ou x3
   if (expressao.search('<=') !== -1) {
@@ -160,15 +166,7 @@ const validarExpressao = (expressao, i, listaF, listaA) => {
       exp = `${exp[0]} - ${listaF.shift()} + ${listaA.shift()} = ${exp[1]}`
       return exp;
     }
-    // exp = expressao.replace(listaX[0], listaX[0] + ' - ' + listaF[indiceFolgalAux] + ' + ' + listaA[indiceArtificialAux]);
-    // return exp.replace('>=', '=');
   }
-
-  // if (expressao.search('=') !== -1) {
-  //   console.log(listaA)
-  //   if (expressao.search(listaX[0]) !== -1)
-  //     return expressao.replace(listaX[0], listaX[0] + ' + ' + listaA[indiceArtificialAux]);
-  // }
 
   if (expressao.search('=') !== -1) {
     if (expressao.search(listaX[0]) !== -1) {
@@ -257,8 +255,6 @@ export const converterObjetivo = (objetivoZ) => {
     }
     return objCanonico;
   });
-
-  //console.log(objCanonico);
   return objCanonico;
 
 }

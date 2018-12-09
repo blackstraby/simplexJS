@@ -1,52 +1,58 @@
 //Autores: Jonas Silva Gomes e Rafael Souza de Lana
 import React, { Component } from 'react';
-import { transformarCanonica, converterObjetivo, formatarValor } from "../Utils/conversores";
-import { Table, Divider, Segment, Label } from "semantic-ui-react";
-import * as Problema from "../public/exemplos/ex1";
-import simplex1 from "../public/jsons/ex1";
+import { transformarCanonica, converterObjetivo, formatarValor, BIG_M } from "../Utils/conversores";
+import { Table, Divider, Segment, Label, Button } from "semantic-ui-react";
+// import * as Problema from "../public/exemplos/ex6";
+// import simplex1 from "../public/jsons/ex6";
 export default class Simplex extends Component {
 
   constructor(props) {
     super(props);
     this.state = {
-      bigM: 999999,
       entrada: {
-        tipo: Problema.tipo,
-        objetivo: Problema.objetivo,
-        restricoes: Problema.restricoes.map(item => item)
+        tipo: "",
+        objetivo: "",
+        restricoes: []
       },
-      simplex: Problema.simplex.map(item => item),
-      cabecalhoTopo: Problema.cabecalhoTopo.map(item => item),
-      cabecalhoEsquerda: Problema.cabecalhoEsquerda.map(item => item),
-      variaveis: Problema.variaveis.map(item => item),
+      simplex: [],
+      cabecalhoTopo: [],
+      cabecalhoEsquerda: [],
       iteracoes: [],
       ajustes: [],
-      iteracoesCabecalhoEsquerda: [Problema.cabecalhoEsquerda.map(item => item)],
+      iteracoesCabecalhoEsquerda: [],
       solucao: [],
       casoParticular: "",
       metodo: "",
-      b: []
+      problemaResolvido: false
     };
   }
 
   componentWillReceiveProps = (nextProps) => {
-    console.log("Entrada: ", nextProps.entrada)
+    const entrada = nextProps.entrada;
+    if (entrada.objetivo) {
+      let { matrizNumerica, listaCabecalho, listaCabecalhoEsquerda } = transformarCanonica(entrada.restricoes, entrada.objetivo);
+      converterObjetivo(entrada.objetivo);
+
+      console.log(listaCabecalho);
+      console.log(listaCabecalhoEsquerda);
+      console.log(matrizNumerica);
+
+      this.setState({
+        entrada,
+        simplex: matrizNumerica.map(item => item),
+        cabecalhoTopo: listaCabecalho.map(item => item),
+        cabecalhoEsquerda: listaCabecalhoEsquerda.map(item => item),
+        iteracoes: [],
+        ajustes: [],
+        iteracoesCabecalhoEsquerda: [listaCabecalhoEsquerda.map(item => item)],
+        solucao: [],
+        casoParticular: "",
+        metodo: ""
+      })
+    }
   }
 
-  componentDidMount = () => {
-    let { matrizNumerica, listaCabecalho, listaCabecalhoEsquerda } = transformarCanonica(simplex1.restricoes, simplex1.objetivo);
-    converterObjetivo(simplex1.objetivo);
-
-    // let objetivo = geObjetivoNumerico(simplex1.objetivo)
-
-    // matrizNumerica.push(objetivo);
-
-    console.log(listaCabecalho);
-    console.log(listaCabecalhoEsquerda);
-    console.log(matrizNumerica);
-
-    // matriz.push(simplex1.objetivo);
-
+  resolverSimplex = () => {
     const simplex = this.state.simplex.map(linha => linha)
 
     if (this.state.cabecalhoTopo.some(item => item.includes('a'))) {
@@ -58,7 +64,7 @@ export default class Simplex extends Component {
 
         if (linha > -1) {
           const novaLinha = simplex[simplex.length - 1].map((valor, i) => {
-            return valor - this.state.bigM * simplex[index][i]
+            return valor - BIG_M * simplex[index][i]
           })
           simplex[simplex.length - 1] = novaLinha;
 
@@ -100,8 +106,79 @@ export default class Simplex extends Component {
     })
 
 
-    this.setState({ solucao })
+    this.setState({ solucao, problemaResolvido: true })
   }
+
+  // componentDidMount = () => {
+  //   console.log(simplex1)
+  //   let { matrizNumerica, listaCabecalho, listaCabecalhoEsquerda } = transformarCanonica(simplex1.restricoes, simplex1.objetivo);
+  //   converterObjetivo(simplex1.objetivo);
+
+  //   // let objetivo = geObjetivoNumerico(simplex1.objetivo)
+
+  //   // matrizNumerica.push(objetivo);
+
+  //   console.log(listaCabecalho);
+  //   console.log(listaCabecalhoEsquerda);
+  //   console.log(matrizNumerica);
+
+  //   // matriz.push(simplex1.objetivo);
+
+  //   const simplex = this.state.simplex.map(linha => linha)
+
+  //   if (this.state.cabecalhoTopo.some(item => item.includes('a'))) {
+  //     this.setState({ metodo: "Big M" })
+  //     console.log("##### SOLUÇÃO VARIÁVEIS ARTIFICIAIS - BIG M")
+  //     const cabecalhoEsquerda = this.state.cabecalhoEsquerda.map(item => item)
+  //     cabecalhoEsquerda.forEach((item, index) => {
+  //       const linha = item.indexOf('a');
+
+  //       if (linha > -1) {
+  //         const novaLinha = simplex[simplex.length - 1].map((valor, i) => {
+  //           return valor - BIG_M * simplex[index][i]
+  //         })
+  //         simplex[simplex.length - 1] = novaLinha;
+
+  //         const ajustes = this.state.ajustes;
+  //         ajustes.push(simplex.map(item => item));
+
+  //         this.setState({ ajustes })
+  //       }
+  //     });
+  //   }
+
+  //   //Se teve ajuste vai pegar o último quadro ajustado, se não pega o quadro inicial
+  //   const resultado = (this.state.ajustes.length > 0) ?
+  //     this.gerarIteracoes(this.state.ajustes.slice(-1)[0])
+  //     :
+  //     this.gerarIteracoes(simplex)
+
+  //   const solucao = this.state.iteracoesCabecalhoEsquerda.slice(-1)[0].map(variavel => {
+  //     const linha = this.state.iteracoesCabecalhoEsquerda.slice(-1)[0].indexOf(variavel)
+  //     if (linha !== -1)
+  //       return resultado[linha].slice(-1)[0]
+  //     else
+  //       return 0
+  //   })
+
+  //   //VERIFICAR MÚLTIPLAS SOLUÇÕES ÓTIMAS
+
+  //   this.state.cabecalhoTopo.forEach((item, posicao) => {
+  //     if (item.indexOf('f') > -1) {
+  //       const ultimoQuadro = this.state.iteracoes.slice(-1)[0].map(item => item);
+
+  //       ultimoQuadro.forEach(linha => {
+  //         if (linha[posicao] > 0 && ultimoQuadro.slice(-1)[0][posicao] === 0) {
+  //           console.log("É MÚLTIPLAS SOLUÇÕES ÓTIMAS")
+  //           this.setState({ casoParticular: "Múltiplas Soluções Ótimas" })
+  //         }
+  //       })
+  //     }
+  //   })
+
+
+  //   this.setState({ solucao })
+  // }
 
   temParcelasNegativas = simplex => simplex[simplex.length - 1].some(item => item < 0)
 
@@ -272,133 +349,164 @@ export default class Simplex extends Component {
   }
 
   render = () => {
-    const { simplex, iteracoes, iteracoesCabecalhoEsquerda, cabecalhoTopo, solucao, casoParticular, ajustes, metodo } = this.state;
+    const { simplex, iteracoes, iteracoesCabecalhoEsquerda, cabecalhoTopo, solucao, casoParticular, ajustes, metodo, problemaResolvido } = this.state;
+
+    console.log("### ITERAÇÕES: ", this.state.iteracoesCabecalhoEsquerda)
+
     return (
       <div>
-        <h3>Quadro de cálculos</h3>
-        <Divider hidden />
-        <Table celled className="tabela-simplex">
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell>BASE</Table.HeaderCell>
-              {cabecalhoTopo.map((valor, i) => <Table.HeaderCell key={i}>{valor}</Table.HeaderCell>)}
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {
-              simplex.map((linha, i) => {
-                return (
-                  <Table.Row key={i}>
-                    <Table.Cell>{iteracoesCabecalhoEsquerda[0][i]}</Table.Cell>
-                    {linha.map((valor, iCelula) =>
-                      <Table.Cell
-                        key={iCelula}
-                        className={(cabecalhoTopo[iCelula].indexOf('a' + 1) > -1 && i === simplex.length - 1) ? "ajuste" : ""}
-                      >
-                        {formatarValor(valor)}
-                      </Table.Cell>)}
-                  </Table.Row>
-                )
-              })
-            }
-          </Table.Body>
-        </Table>
-        <Divider hidden />
-        {(ajustes.length > 0) ?
-          ajustes.map((tabela, i) => {
-            return (
-              <div key={i}>
-                <h3>{i + 1}ª Ajuste</h3>
-                <Divider hidden />
-                <Table celled className="tabela-simplex">
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.HeaderCell>BASE</Table.HeaderCell>
-                      {cabecalhoTopo.map((valor, i) => <Table.HeaderCell key={i}>{valor}</Table.HeaderCell>)}
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {
-                      tabela.map((linha, j) => {
-                        return (
-                          <Table.Row key={j}>
-                            <Table.Cell>{iteracoesCabecalhoEsquerda[i + 1][j]}</Table.Cell>
-                            {linha.map((valor, iCelula) =>
-                              <Table.Cell
-                                key={iCelula}
-                                className={
-                                  (cabecalhoTopo[iCelula].indexOf('a' + (i + 1 + 1)) > -1 && j === simplex.length - 1) ? "ajuste" : ""
-                                }
-                              >
-                                {formatarValor(valor)}
-                              </Table.Cell>)
-                            }
-                          </Table.Row>
-                        )
-                      })
-                    }
-                  </Table.Body>
-                </Table>
-                <Divider hidden />
-              </div>
-            )
-          })
-          :
-          (false)
-        }
-        {iteracoes.map((tabela, i) => {
-          return (
-            <div key={i}>
-              <h3>{i + 1}ª Iteração</h3>
-              <Divider hidden />
-              <Table celled className="tabela-simplex">
-                <Table.Header>
-                  <Table.Row>
-                    <Table.HeaderCell>BASE</Table.HeaderCell>
-                    {cabecalhoTopo.map((valor, i) => <Table.HeaderCell key={i}>{valor}</Table.HeaderCell>)}
-                  </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                  {
-                    tabela.map((linha, j) => {
-                      return (
-                        <Table.Row key={j}>
-                          <Table.Cell>{iteracoesCabecalhoEsquerda[i + 1][j]}</Table.Cell>
-                          {linha.map((valor, i) => <Table.Cell key={i}>{formatarValor(valor)}</Table.Cell>)}
-                        </Table.Row>
-                      )
-                    })
-                  }
-                </Table.Body>
-              </Table>
-              <Divider hidden />
-            </div>
-          )
-        })}
-        <Segment padded>
-          {(casoParticular) ?
-            <h3>Caso particular: &nbsp;<Label color='purple'>{casoParticular}</Label></h3>
-            :
-            <Label color='purple'>Solução básica</Label>
-          }
-
-          {(metodo) ?
-            <h3>Método: &nbsp;<Label color='purple'>{metodo}</Label></h3>
-            :
-            <Label color='purple'>Simplex Simples</Label>
-          }
+        {(simplex.length > 1) ?
           <div>
-            <Divider />
-            <h3>Solução:</h3>
-            {(solucao.length > 0) ?
-              iteracoesCabecalhoEsquerda.slice(-1)[0].map((variavel, i) => {
-                return <h4 key={i}>{`${variavel} = ${formatarValor(solucao[i])}`}</h4>
+            {(!problemaResolvido) ?
+              <Button onClick={this.resolverSimplex} color="purple">
+                Resolver Simplex
+              </Button>
+              :
+              <p>Problema Resolvido</p>
+            }
+
+            <h3>Quadro de cálculos</h3>
+            <Divider hidden />
+            <Table celled className="tabela-simplex">
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>BASE</Table.HeaderCell>
+                  {cabecalhoTopo.map((valor, i) => <Table.HeaderCell key={i}>{valor}</Table.HeaderCell>)}
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {
+                  simplex.map((linha, i) => {
+                    return (
+                      <Table.Row key={i}>
+                        <Table.Cell>{iteracoesCabecalhoEsquerda[0][i]}</Table.Cell>
+                        {linha.map((valor, iCelula) =>
+                          <Table.Cell
+                            key={iCelula}
+                            className={(cabecalhoTopo[iCelula].indexOf('a' + 1) > -1 && i === simplex.length - 1) ? "ajuste" : ""}
+                          >
+                            {formatarValor(valor)}
+                          </Table.Cell>)}
+                      </Table.Row>
+                    )
+                  })
+                }
+              </Table.Body>
+            </Table>
+            <Divider hidden />
+            {(ajustes.length > 0) ?
+              ajustes.map((tabela, i) => {
+                return (
+                  <div key={i}>
+                    <h3>{i + 1}ª Ajuste</h3>
+                    <Divider hidden />
+                    <Table celled className="tabela-simplex">
+                      <Table.Header>
+                        <Table.Row>
+                          <Table.HeaderCell>BASE</Table.HeaderCell>
+                          {cabecalhoTopo.map((valor, i) => <Table.HeaderCell key={i}>{valor}</Table.HeaderCell>)}
+                        </Table.Row>
+                      </Table.Header>
+                      <Table.Body>
+                        {
+                          tabela.map((linha, j) => {
+                            return (
+                              <Table.Row key={j}>
+                                <Table.Cell>{iteracoesCabecalhoEsquerda[i + 1][j]}</Table.Cell>
+                                {linha.map((valor, iCelula) =>
+                                  <Table.Cell
+                                    key={iCelula}
+                                    className={
+                                      (cabecalhoTopo[iCelula].indexOf('a' + (i + 1 + 1)) > -1 && j === simplex.length - 1) ? "ajuste" : ""
+                                    }
+                                  >
+                                    {formatarValor(valor)}
+                                  </Table.Cell>)
+                                }
+                              </Table.Row>
+                            )
+                          })
+                        }
+                      </Table.Body>
+                    </Table>
+                    <Divider hidden />
+                  </div>
+                )
               })
               :
               (false)
             }
+            {iteracoes.map((tabela, i) => {
+              return (
+                <div key={i}>
+                  <h3>{i + 1}ª Iteração</h3>
+                  <Divider hidden />
+                  <Table celled className="tabela-simplex">
+                    <Table.Header>
+                      <Table.Row>
+                        <Table.HeaderCell>BASE</Table.HeaderCell>
+                        {cabecalhoTopo.map((valor, i) => <Table.HeaderCell key={i}>{valor}</Table.HeaderCell>)}
+                      </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                      {
+                        tabela.map((linha, j) => {
+                          return (
+                            <Table.Row key={j}>
+                              <Table.Cell>{iteracoesCabecalhoEsquerda[i + 1][j]}</Table.Cell>
+                              {linha.map((valor, i) => <Table.Cell key={i}>{formatarValor(valor)}</Table.Cell>)}
+                            </Table.Row>
+                          )
+                        })
+                      }
+                    </Table.Body>
+                  </Table>
+                  <Divider hidden />
+                </div>
+              )
+            })}
+            {(problemaResolvido) ?
+              <Segment padded>
+                {(casoParticular) ?
+                  <h3>Caso particular: &nbsp;<Label color='purple'>{casoParticular}</Label></h3>
+                  :
+                  <Label color='purple'>Solução básica</Label>
+                }
+
+                {(metodo) ?
+                  <h3>Método: &nbsp;<Label color='purple'>{metodo}</Label></h3>
+                  :
+                  <Label color='purple'>Simplex Simples</Label>
+                }
+                <div>
+                  <Divider />
+                  <h3>Solução:</h3>
+                  {(solucao.length > 0) ?
+                    iteracoesCabecalhoEsquerda.slice(-1)[0].map((variavel, i) => {
+                      return <h4 key={i}>{`${variavel} = ${formatarValor(solucao[i])}`}</h4>
+                    })
+                    :
+                    (false)
+                  }
+                </div>
+              </Segment>
+              :
+              (false)
+            }
+
           </div>
-        </Segment>
+          :
+          <div>
+            Aqui será exibido:
+            <ul>
+              <li>Quadro de cálculos</li>
+              <li>Ajustes</li>
+              <li>Iterações</li>
+              <li>Caso particular (caso tenha)</li>
+              <li>Solução</li>
+            </ul>
+          </div>
+        }
       </div>
     );
   }

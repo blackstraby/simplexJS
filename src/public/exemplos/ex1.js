@@ -1,17 +1,6 @@
 export const tipo = 'max';
 export const objetivo = '520x1 + 450x2 = 0';
 export const restricoes = [
-  /* Precisa colocar tudo na ordem dos sinais todos F, todos A
-       Caso contrario ele reseta para F1 novamente se pular
-
-  '40x1 + 25x2 <= 400',
-  '24x1 + 30x2 <= 360',
-  '40x1 + 25x2 <= 400',
-  '24x1 + 30x2 >= 360',
-   40x1 + 25x2 >= 400',
-  '24x1 + 30x2 >= 360',
-  '24x1 + 30x2 = 360',
-  */
   '40x1 + 25x2 <= 400',
   '24x1 + 30x2 <= 360',
 ]

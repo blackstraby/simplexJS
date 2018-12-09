@@ -106,8 +106,6 @@ class App extends Component {
           <Grid.Row stretched>
             <Grid.Column>
               <Segment padded>
-                Método utilizado: &nbsp;<Label color={"purple"}>Simplex simples</Label>
-                <Divider hidden />
                 <Simplex entrada={json} />
               </Segment>
             </Grid.Column>
