@@ -2,8 +2,6 @@
 import React, { Component } from 'react';
 import { transformarCanonica, converterObjetivo, formatarValor, BIG_M } from "../Utils/conversores";
 import { Table, Divider, Segment, Label, Button } from "semantic-ui-react";
-// import * as Problema from "../public/exemplos/ex6";
-// import simplex1 from "../public/jsons/ex6";
 export default class Simplex extends Component {
 
   constructor(props) {
@@ -32,16 +30,6 @@ export default class Simplex extends Component {
     if (entrada.objetivo) {
       let { matrizNumerica, listaCabecalho, listaCabecalhoEsquerda } = transformarCanonica(entrada.restricoes, entrada.objetivo, entrada.tipo);
       converterObjetivo(entrada.objetivo);
-
-      const teste = matrizNumerica.map(item => item)
-      let aux = teste[0].map(item => item)
-      teste[0] = teste[1].map(item => item)
-      teste[1] = aux.map(item => item)
-
-      const outroTeste = listaCabecalhoEsquerda.map(item => item)
-      let aux2 = outroTeste[0];
-      outroTeste[0] = outroTeste[1];
-      outroTeste[1] = aux2;
 
       let novalistaCabecalhoEsquerda = [];
 
@@ -73,26 +61,31 @@ export default class Simplex extends Component {
     }
   }
 
+  contemVariaveisArtificiais = (cabecalhoTopo) => cabecalhoTopo.some(item => item.includes('a'))
+
+  aplicarMetodoBigM = (simplex) => {
+    this.setState({ metodo: "Big M" })
+    const cabecalhoEsquerda = this.state.cabecalhoEsquerda.map(item => item)
+    cabecalhoEsquerda.forEach((item, index) => {
+      if (item.includes('a')) {
+        const novaLinha = simplex[simplex.length - 1].map((valor, i) => {
+          return valor - BIG_M * simplex[index][i]
+        })
+        simplex[simplex.length - 1] = novaLinha;
+
+        const ajustes = this.state.ajustes;
+        ajustes.push(simplex.map(item => item));
+
+        this.setState({ ajustes })
+      }
+    });
+  }
+
   resolverSimplex = () => {
     const simplex = this.state.simplex.map(linha => linha)
 
-    if (this.state.cabecalhoTopo.some(item => item.includes('a'))) {
-      this.setState({ metodo: "Big M" })
-      const cabecalhoEsquerda = this.state.cabecalhoEsquerda.map(item => item)
-      cabecalhoEsquerda.forEach((item, index) => {
-        const linha = item.indexOf('a');
-
-        if (linha > -1) {
-          const novaLinha = simplex[simplex.length - 1].map((valor, i) => {
-            return valor - BIG_M * simplex[index][i]
-          })
-          simplex[simplex.length - 1] = novaLinha;
-
-          const ajustes = this.state.ajustes;
-          ajustes.push(simplex.map(item => item));
-          this.setState({ ajustes })
-        }
-      });
+    if (this.contemVariaveisArtificiais(this.state.cabecalhoTopo)) {
+      this.aplicarMetodoBigM(simplex);
     }
 
     //Se teve ajuste vai pegar o último quadro ajustado, se não pega o quadro inicial
@@ -137,7 +130,33 @@ export default class Simplex extends Component {
     return posicoes.every(item => item === 0)
   }
 
+  gerarNovaLinhaPivo = (simplex, coluna, linha) => {
+    let variavelParaSair = this.getVariavelParaSair(simplex, coluna, linha);
+    return simplex[linha].map(variavel => variavel / variavelParaSair)
+  }
+
+  //DEGENERESCÊNCIA
+  //Se há pelo menos uma solução básica viável com uma variável básica com valor zero (=0). 
+  //Se há, essa solução é uma solução básica viável degenerada.
+  contemDegenerescencia = (simplex) => simplex.some(linha => linha[linha.length - 1] === 0)
+
+  //ÓTIMO NÃO FINITO
+  //Retorna se todos os itens da coluna pivô não são positivos (são todos <= 0)
   otimoNaoFinito = (simplex, colunaPivo) => (simplex.every(linha => linha[colunaPivo] <= 0))
+
+  //Retorna um novo quadro com as operações feitas. 
+  //Se for a linha pivô retorna ela mesmo,
+  //se não, retorna linha antiga - (coeficiente da coluna pivô) * nova linha pivô
+  executarIteracao = (simplex, linhaPivo, novaLinhaPivo, colunaPivo) => {
+    return simplex.map((linha, posicaoLinha) =>
+      (linhaPivo === posicaoLinha) ?
+        novaLinhaPivo
+        :
+        linha.map((item, posicaoColuna) =>
+          item - linha[colunaPivo] * novaLinhaPivo[posicaoColuna]
+        )
+    )
+  }
 
   gerarIteracoes = (simplex, i) => {
     if (i++ > 20) {
@@ -149,11 +168,8 @@ export default class Simplex extends Component {
       return simplex
     } else {
       let colunaPivo = this.getColunaPivo(simplex[simplex.length - 1])
-
       let linhaPivo = this.getLinhaPivo(simplex, colunaPivo.coluna)
 
-      //ÓTIMO NÃO FINITO
-      //Retorna se todos os itens da coluna pivô não são positivos (são todos <= 0)
       if (this.otimoNaoFinito(simplex, colunaPivo.coluna)) {
         this.setState({ casoParticular: "Solução ótimo não finito" })
         return simplex
@@ -162,26 +178,11 @@ export default class Simplex extends Component {
       const novaLinhaPivo =
         this.gerarNovaLinhaPivo(simplex, colunaPivo.coluna, linhaPivo.linha);
 
-      //Retorna uma nova tabela com as operações feitas. 
-      //Se for a linha pivô retorna ela mesmo,
-      //se não, retorna linha antiga - (coeficiente da coluna pivô) * nova linha pivô
-      const novoSimplex = simplex.map((linha, posicaoLinha) =>
-        (linhaPivo.linha === posicaoLinha) ?
-          novaLinhaPivo
-          :
-          linha.map((item, posicaoColuna) =>
-            item - linha[colunaPivo.coluna] * novaLinhaPivo[posicaoColuna]
-          )
-      )
+      const novoSimplex =
+        this.executarIteracao(simplex, linhaPivo.linha, novaLinhaPivo, colunaPivo.coluna);
 
-      //DEGENERESCÊNCIA
-      //Se há pelo menos uma solução básica viável com uma variável básica com valor zero (=0). 
-      //Se há, essa solução é uma solução básica viável degenerada.
-      novoSimplex.forEach(linha => {
-        if (linha[linha.length - 1] === 0) {
-          this.setState({ casoParticular: "Solução ótima e degenerada" })
-        }
-      });
+      if (this.contemDegenerescencia(novoSimplex))
+        this.setState({ casoParticular: "Solução ótima e degenerada" })
 
       const iteracoesCabecalhoEsquerda = this.state.iteracoesCabecalhoEsquerda;
       const novoCabecalhoEsquerda = iteracoesCabecalhoEsquerda.slice(-1)[0].map(item => item);
@@ -285,13 +286,6 @@ export default class Simplex extends Component {
       return null;
     })
     return variavelParaSair;
-  }
-
-
-  gerarNovaLinhaPivo = (simplex, coluna, linha) => {
-    let variavelParaSair = this.getVariavelParaSair(simplex, coluna, linha);
-
-    return simplex[linha].map(variavel => variavel / variavelParaSair)
   }
 
   render = () => {
