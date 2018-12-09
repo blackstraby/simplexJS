@@ -47,7 +47,8 @@ export default class Simplex extends Component {
         iteracoesCabecalhoEsquerda: [listaCabecalhoEsquerda.map(item => item)],
         solucao: [],
         casoParticular: "",
-        metodo: ""
+        metodo: "",
+        problemaResolvido: false
       })
     }
   }
@@ -104,7 +105,6 @@ export default class Simplex extends Component {
         })
       }
     })
-
 
     this.setState({ solucao, problemaResolvido: true })
   }
