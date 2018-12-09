@@ -2,7 +2,7 @@
 
 export const BIG_M = 999999;
 
-export const transformarCanonica = (restricoes, objetivo) => {
+export const transformarCanonica = (restricoes, objetivo, tipo) => {
   let matriz = [];
   let matrizNumerica = []
   let listaFolga = [];
@@ -33,11 +33,9 @@ export const transformarCanonica = (restricoes, objetivo) => {
 
   restricoes.map((restricao, i) => {
     let expressao = validarExpressao(restricao, i, copiaListaFolga, copiaListaArtificial)
-    console.log(expressao)
     return matriz.push(expressao);
   });
 
-  //console.log(listaX)
   let listaCabecalho = gerarListaDeX(listaX)
 
   listaFolga.map(item => listaCabecalho.push(item))
@@ -50,7 +48,7 @@ export const transformarCanonica = (restricoes, objetivo) => {
 
   matriz.push(objetivo)
 
-  matrizNumerica = getMatrizNumerica(matriz, listaCabecalho)
+  matrizNumerica = getMatrizNumerica(matriz, listaCabecalho, tipo)
 
   let matrizCanonica = {
     matriz, //restricoes e objetivo
@@ -63,8 +61,7 @@ export const transformarCanonica = (restricoes, objetivo) => {
   return matrizCanonica;
 }
 
-const getMatrizNumerica = (matriz, topo) => {
-  console.log(matriz)
+const getMatrizNumerica = (matriz, topo, tipo) => {
   let m = matriz.map((linha, i) => {
     let newLinha = linha.replace(/\s+/g, '');
     let matrizNumerica = []
@@ -97,12 +94,11 @@ const getMatrizNumerica = (matriz, topo) => {
     })
     return matrizNumerica;
   });
-  console.log(m)
 
   //Ajusta a linha do Z
   m[m.length - 1] = m[m.length - 1].map((valor, i) => {
     if (valor !== 0)
-      return Math.abs(valor) * -1
+      return (tipo === "min") ? Math.abs(valor) : Math.abs(valor) * -1
     if (topo[i].includes('a'))
       return BIG_M
     else
@@ -111,18 +107,6 @@ const getMatrizNumerica = (matriz, topo) => {
 
   return m;
 }
-
-// const getCabecalhoEsquerda = (listaFolga, listaArtificial) => {
-//   let listaCabecalhoEsquerda = []
-//   if (listaFolga.length > 0)
-//     listaFolga.map(item => listaCabecalhoEsquerda.push(item))
-
-
-//   if (listaArtificial.length > 0)
-//     listaArtificial.map(item => listaCabecalhoEsquerda.push(item))
-
-//   return listaCabecalhoEsquerda;
-// }
 
 const getCabecalhoEsquerda = (listaFolga, listaArtificial, listaCabecalho, restricoes) => {
   let listaCabecalhoEsquerda = []
@@ -143,8 +127,6 @@ const getCabecalhoEsquerda = (listaFolga, listaArtificial, listaCabecalho, restr
       listaCabecalhoEsquerda.push(valor);
     }
   })
-
-  console.log(listaCabecalhoEsquerda)
 
   return listaCabecalhoEsquerda;
 }
