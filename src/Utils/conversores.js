@@ -41,7 +41,7 @@ export const transformarCanonica = (restricoes) => {
   listaCabecalhoEsquerda.push('z')
   listaCabecalho.push('b')
 
-  matrizNumerica = getMatrizNumerica(matriz)
+  matrizNumerica = getMatrizNumerica(matriz, listaCabecalho)
 
   let matrizCanonica = {
     matriz, //restricoes
@@ -53,8 +53,46 @@ export const transformarCanonica = (restricoes) => {
   }
   return matrizCanonica;
 }
+const getMatrizNumerica = (matriz, topo) => {
 
-const getMatrizNumerica = (matriz) => {
+  console.log(matriz)
+
+  let m = matriz.map((linha, i) => {
+
+
+    let newLinha = linha.replace(/\s+/g, '');
+
+    return topo.map(item => {
+      let matrizNumerica = []
+
+      let posicao = newLinha.indexOf(item)
+
+      if (posicao !== -1) {
+        let elemento = ''
+        for (let index = 0; index < posicao; index++) {
+          elemento += newLinha[index]
+        }
+        newLinha = newLinha.replace(item, '')
+        newLinha = newLinha.replace(elemento, '')
+
+        if (elemento === '+')
+          elemento += '1'
+
+        //console.log(item, elemento)
+        matrizNumerica.push(parseInt(elemento))
+      } else {
+        matrizNumerica.push(0)
+        //console.log(0)
+      }
+      return matrizNumerica;
+    })
+
+  });
+  console.log(m)
+  return m;
+}
+
+const getMatrizNumerica2 = (matriz) => {
   let matrizNumerica = []
 
   matriz.map((linha, i) => {
