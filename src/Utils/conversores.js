@@ -1,5 +1,8 @@
 //Autores: Jonas Silva Gomes e Rafael Souza de Lana
-export const transformarCanonica = (restricoes) => {
+
+export const BIG_M = 999999;
+
+export const transformarCanonica = (restricoes, objetivo) => {
   let matriz = [];
   let matrizNumerica = []
   let listaFolga = [];
@@ -25,9 +28,12 @@ export const transformarCanonica = (restricoes) => {
     return false;
   });
 
+  const copiaListaArtificial = listaArtificial.map(valor => valor);
+  const copiaListaFolga = listaFolga.map(valor => valor);
 
   restricoes.map((restricao, i) => {
-    let expressao = validarExpressao(restricao, i, listaFolga, listaArtificial)
+    let expressao = validarExpressao(restricao, i, copiaListaFolga, copiaListaArtificial)
+    console.log(expressao)
     return matriz.push(expressao);
   });
 
@@ -41,10 +47,12 @@ export const transformarCanonica = (restricoes) => {
   listaCabecalhoEsquerda.push('z')
   listaCabecalho.push('b')
 
+  matriz.push(objetivo)
+
   matrizNumerica = getMatrizNumerica(matriz, listaCabecalho)
 
   let matrizCanonica = {
-    matriz, //restricoes
+    matriz, //restricoes e objetivo
     listaFolga,
     listaArtificial,
     listaCabecalho,
@@ -53,19 +61,20 @@ export const transformarCanonica = (restricoes) => {
   }
   return matrizCanonica;
 }
+
 const getMatrizNumerica = (matriz, topo) => {
-
   console.log(matriz)
-
   let m = matriz.map((linha, i) => {
-
     let newLinha = linha.replace(/\s+/g, '');
+    let matrizNumerica = []
 
-    return topo.map(item => {
-      let matrizNumerica = []
+    topo.forEach(item => {
       let posicao = newLinha.indexOf(item)
-
-      if (posicao !== -1) {
+      if (item === "b") {
+        let posicao = newLinha.indexOf("=");
+        let elemento = newLinha.substr(posicao + 1, newLinha.length);
+        matrizNumerica.push(parseInt(elemento))
+      } else if (posicao !== -1) {
         let elemento = ''
         for (let index = 0; index < posicao; index++) {
           elemento += newLinha[index]
@@ -74,101 +83,32 @@ const getMatrizNumerica = (matriz, topo) => {
         newLinha = newLinha.replace(elemento, '')
 
         if (elemento === '+')
-          elemento += '1'
-
-        if (isNaN(parseInt(elemento)))
+          elemento = '1'
+        else if (elemento === '-')
+          elemento = '-1'
+        else if (isNaN(parseInt(elemento)))
           elemento = '1'
 
         matrizNumerica.push(parseInt(elemento))
       } else {
         matrizNumerica.push(0)
       }
-      //console.log(matrizNumerica)
-      return matrizNumerica;
     })
-
+    return matrizNumerica;
   });
   console.log(m)
-  return m;
-}
 
-const getMatrizNumerica2 = (matriz) => {
-  let matrizNumerica = []
-
-  matriz.map((linha, i) => {
-
-    let linhaNumerica = []
-
-    for (let index = 0; index < linha.length; index++) {
-      const elemento = linha[index];
-
-      if (elemento === 'x' && linha[index - 1] === undefined) {
-        linhaNumerica.push(1)
-
-      } else if (elemento === 'x' && !isNaN(linha[index - 1])) {
-        if (!isNaN(linha[index - 2]) && !isNaN(linha[index - 1])) {
-          let n = linha[index - 2] + linha[index - 1]
-          linhaNumerica.push(Number(n))
-        } else {
-          linhaNumerica.push(Number(linha[index - 1]))
-        }
-
-      } else if (elemento === 'f' && !isNaN(linha[index - 1])) {
-        linhaNumerica.push(1)
-
-      } else if (elemento === 'a' && !isNaN(linha[index - 1])) {
-        linhaNumerica.push(1)
-
-      } else if (elemento === '=') {
-        if (!isNaN(linha[linha.length - 2]) && !isNaN(linha[linha.length - 3])) {
-          let n = linha[linha.length - 3] + linha[linha.length - 2] + linha[linha.length - 1]
-          linhaNumerica.push(Number(n))
-        }
-        else if (!isNaN(linha[linha.length - 1]) && !isNaN(linha[linha.length - 2])) {
-          linhaNumerica.push(Number(linha[linha.length - 2] + linha[linha.length - 1]))
-        } else {
-          linhaNumerica.push(Number(linha[linha.length - 1]))
-        }
-      }
-    }
-    return matrizNumerica.push(linhaNumerica)
-
+  //Ajusta a linha do Z
+  m[m.length - 1] = m[m.length - 1].map((valor, i) => {
+    if (valor !== 0)
+      return Math.abs(valor) * -1
+    if (topo[i].includes('a'))
+      return BIG_M
+    else
+      return valor
   })
-  return matrizNumerica;
-}
 
-export const geObjetivoNumerico = (linha) => {
-  let linhaNumerica = []
-  for (let index = 0; index < linha.length; index++) {
-    const elemento = linha[index];
-
-    if (elemento === 'x' && linha[index - 1] === undefined) {
-      linhaNumerica.push(1)
-
-    } else if (elemento === 'x' && !isNaN(linha[index - 1])) {
-      if (!isNaN(linha[index - 2]) && !isNaN(linha[index - 3])) {
-        let n = linha[index - 3] + linha[index - 2] + linha[index - 1]
-        linhaNumerica.push(Number(n))
-      } else if (!isNaN(linha[index - 2]) && !isNaN(linha[index - 1])) {
-        let n = linha[index - 2] + linha[index - 1]
-        linhaNumerica.push(Number(n))
-      } else {
-        linhaNumerica.push(Number(linha[index - 1]))
-      }
-
-    } else if (elemento === '=') {
-      if (!isNaN(linha[linha.length - 2]) && !isNaN(linha[linha.length - 3])) {
-        let n = linha[linha.length - 3] + linha[linha.length - 2] + linha[linha.length - 1]
-        linhaNumerica.push(Number(n))
-      }
-      else if (!isNaN(linha[linha.length - 1]) && !isNaN(linha[linha.length - 2])) {
-        linhaNumerica.push(Number(linha[linha.length - 2] + linha[linha.length - 1]))
-      } else {
-        linhaNumerica.push(Number(linha[linha.length - 1]))
-      }
-    }
-  }
-  return linhaNumerica
+  return m;
 }
 
 const getCabecalhoEsquerda = (listaFolga, listaArtificial) => {
@@ -185,52 +125,57 @@ const getCabecalhoEsquerda = (listaFolga, listaArtificial) => {
 
 const validarExpressao = (expressao, i, listaF, listaA) => {
   let exp = '';
-  let indiceArtificialAux = 0;
-  let indiceFolgalAux = 0;
+  // let indiceArtificialAux = 0;
+  // let indiceFolgalAux = 0;
 
   let listaX = mapearExpressao(expressao.replace(/\s+/g, ''));
 
-  if (listaA.length < i) {
-    indiceArtificialAux = i - listaA.length
-  } else if (listaA.length > i) {
-    indiceArtificialAux = i
-  }
+  // if (listaA.length < i) {
+  //   indiceArtificialAux = i - listaA.length
+  // } else if (listaA.length > i) {
+  //   indiceArtificialAux = i
+  // }
 
   //Valida lista de F para nao chegar um indice que nao existe
-  if (listaF.length < i) {
-    indiceFolgalAux = i - listaF.length
-  } else if (listaF.length > i) {
-    indiceFolgalAux = i
-  }
+  // if (listaF.length < i) {
+  //   indiceFolgalAux = i - listaF.length
+  // } else if (listaF.length > i) {
+  //   indiceFolgalAux = i
+  // }
 
-  if (listaF[indiceFolgalAux] === undefined) {
-    listaF[indiceFolgalAux] = listaF[0]
-  }
+  // if (listaF[indiceFolgalAux] === undefined) {
+  //   listaF[indiceFolgalAux] = listaF[0]
+  // }
 
   // Colocar os F de acordo com x1, x2 ou x3
   if (expressao.search('<=') !== -1) {
-    if (expressao.search(listaX[0]) !== -1) {
-      if (listaX[2] === undefined && listaX[1] === undefined)
-        exp = expressao.replace(listaX[0], listaX[0] + ' + ' + listaF[indiceFolgalAux]);
-      if (listaX[2] !== undefined)
-        exp = expressao.replace(listaX[2], listaX[2] + ' + ' + listaF[indiceFolgalAux]);
-      if (listaX[1] !== undefined)
-        exp = expressao.replace(listaX[1], listaX[1] + ' + ' + listaF[indiceFolgalAux]);
-      else
-        exp = expressao.replace(listaX[0], listaX[0] + ' + ' + listaF[indiceFolgalAux]);
-    }
-    return exp.replace('<=', '=');
+    exp = expressao.split('<=');
+    exp = `${exp[0]} + ${listaF.shift()} = ${exp[1]}`
+    return exp;
   }
 
   if (expressao.search('>=') !== -1) {
-    if (expressao.search(listaX[0]) !== -1)
-      exp = expressao.replace(listaX[0], listaX[0] + ' - ' + listaF[indiceFolgalAux] + ' + ' + listaA[indiceArtificialAux]);
-    return exp.replace('>=', '=');
+    if (expressao.search(listaX[0]) !== -1) {
+      exp = expressao.split('>=');
+      exp = `${exp[0]} - ${listaF.shift()} + ${listaA.shift()} = ${exp[1]}`
+      return exp;
+    }
+    // exp = expressao.replace(listaX[0], listaX[0] + ' - ' + listaF[indiceFolgalAux] + ' + ' + listaA[indiceArtificialAux]);
+    // return exp.replace('>=', '=');
   }
 
+  // if (expressao.search('=') !== -1) {
+  //   console.log(listaA)
+  //   if (expressao.search(listaX[0]) !== -1)
+  //     return expressao.replace(listaX[0], listaX[0] + ' + ' + listaA[indiceArtificialAux]);
+  // }
+
   if (expressao.search('=') !== -1) {
-    if (expressao.search(listaX[0]) !== -1)
-      return expressao.replace(listaX[0], listaX[0] + ' + ' + listaA[indiceArtificialAux]);
+    if (expressao.search(listaX[0]) !== -1) {
+      exp = expressao.split('=');
+      exp = `${exp[0]} + ${listaA.shift()} = ${exp[1]}`
+      return exp;
+    }
   }
 
   return false;
