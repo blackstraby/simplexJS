@@ -59,12 +59,10 @@ const getMatrizNumerica = (matriz, topo) => {
 
   let m = matriz.map((linha, i) => {
 
-
     let newLinha = linha.replace(/\s+/g, '');
 
     return topo.map(item => {
       let matrizNumerica = []
-
       let posicao = newLinha.indexOf(item)
 
       if (posicao !== -1) {
@@ -78,12 +76,14 @@ const getMatrizNumerica = (matriz, topo) => {
         if (elemento === '+')
           elemento += '1'
 
-        //console.log(item, elemento)
+        if (isNaN(parseInt(elemento)))
+          elemento = '1'
+
         matrizNumerica.push(parseInt(elemento))
       } else {
         matrizNumerica.push(0)
-        //console.log(0)
       }
+      //console.log(matrizNumerica)
       return matrizNumerica;
     })
 

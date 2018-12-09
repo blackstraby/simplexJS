@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { transformarCanonica, converterObjetivo, formatarValor, geObjetivoNumerico } from "../Utils/conversores";
 import { Table, Divider, Segment, Label } from "semantic-ui-react";
 import * as Problema from "../public/exemplos/ex1";
-import simplex1 from "../public/jsons/ex1";
+import simplex1 from "../public/jsons/ex3";
 export default class Simplex extends Component {
 
   constructor(props) {
@@ -38,7 +38,7 @@ export default class Simplex extends Component {
     converterObjetivo(simplex1.objetivo);
 
     let objetivo = geObjetivoNumerico(simplex1.objetivo)
-   
+
     matrizNumerica.push(objetivo);
 
     console.log(listaCabecalho);
